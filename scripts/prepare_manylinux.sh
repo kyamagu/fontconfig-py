@@ -12,14 +12,17 @@ install_freetype() {
     make
     make -j
     make install
+    cd ..
 }
 
 install_fontconfig() {
     git clone https://gitlab.freedesktop.org/fontconfig/fontconfig.git \
         -b $FONTCONFIG_VERSION --depth 1
+    cd fontconfig
     ./autogen.sh --sysconfdir=/etc --prefix=/usr --mandir=/usr/share/man
     make -j
     make install
+    cd ..
 }
 
 yum install -y gperf gettext-devel libuuid-devel

@@ -22,8 +22,8 @@ jobs:
         run: python -m cibuildwheel --output-dir dist
         env:
           CIBW_ARCHS_LINUX: auto
-          CIBW_ARCHS_MACOS: x86_64 arm64
-          CIBW_SKIP: cp36* cp37* cp38* pp* *win* *musllinux*
+          CIBW_ARCHS_MACOS: auto
+          CIBW_SKIP: cp36* cp37* pp* *win* *musllinux*
           CIBW_BEFORE_ALL_LINUX: bash {project}/scripts/prepare_manylinux.sh
           CIBW_BEFORE_BUILD: python -m pip install -U poetry
           CIBW_TEST_REQUIRES: pytest
