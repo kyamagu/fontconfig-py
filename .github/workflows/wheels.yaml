@@ -25,9 +25,7 @@ jobs:
           CIBW_ARCHS_MACOS: x86_64
           CIBW_SKIP: cp36* cp37* cp38* pp* *win* *musllinux*
           CIBW_BEFORE_ALL_LINUX: bash {project}/scripts/prepare_manylinux.sh
-          CIBW_BEFORE_BUILD: >
-            git clean -xf &&
-            ls -l {project}/*
+          CIBW_BEFORE_BUILD: git clean -xf && rm -rf {project}/build
           CIBW_ENVIRONMENT_LINUX: >
             LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib
             PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/lib/pkgconfig
