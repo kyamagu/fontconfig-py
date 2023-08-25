@@ -25,6 +25,6 @@ install_fontconfig() {
     cd ..
 }
 
-yum install -y gperf gettext-devel libuuid-devel
+yum --disablerepo=epel install -y gperf gettext-devel libuuid-devel
 install_freetype
 install_fontconfig
