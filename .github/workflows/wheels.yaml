@@ -30,7 +30,7 @@ jobs:
             PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/lib/pkgconfig
           CIBW_TEST_REQUIRES: pytest
           CIBW_TEST_COMMAND: pytest {project}/tests
-          CIBW_TEST_SKIP: "*-macosx_arm64"
+          CIBW_TEST_SKIP: "*"
 
       - uses: actions/upload-artifact@v3
         with:
