@@ -27,7 +27,7 @@ jobs:
       - name: Build wheels
         run: python -m cibuildwheel --output-dir dist
         env:
-          CIBW_ARCHS_LINUX: auto
+          CIBW_ARCHS_LINUX: x86_64
           CIBW_ARCHS_MACOS: x86_64
           CIBW_SKIP: cp36* cp37* pp* *win*
           CIBW_BEFORE_ALL_LINUX: bash {project}/scripts/prepare_linux.sh
