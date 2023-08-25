@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
-FREETYPE_VERSION="VER-2-13-0"
-FONTCONFIG_VERSION="2.14.0"
+set -eux
+
+FREETYPE_VERSION=${FREETYPE_VERSION:-"VER-2-13-0"}
+FONTCONFIG_VERSION=${FONTCONFIG_VERSION:-"2.14.0"}
 
 install_freetype() {
     git clone https://gitlab.freedesktop.org/freetype/freetype.git \
