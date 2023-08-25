@@ -29,7 +29,7 @@ jobs:
         env:
           CIBW_ARCHS_LINUX: x86_64
           CIBW_ARCHS_MACOS: x86_64
-          CIBW_SKIP: cp36* cp37* pp* *win*
+          CIBW_SKIP: cp36* cp37* pp* cp38-macos*
           CIBW_BEFORE_ALL_LINUX: bash {project}/scripts/prepare_linux.sh
           CIBW_BEFORE_BUILD: git clean -xf && rm -rf {project}/build
           CIBW_ENVIRONMENT_LINUX: >
