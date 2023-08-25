@@ -27,6 +27,15 @@ install_fontconfig() {
     cd ..
 }
 
-yum --disablerepo=epel install -y gperf gettext-devel libuuid-devel
+if command -v yum &> /dev/null; then
+    yum --disablerepo=epel install -y gperf gettext-devel libuuid-devel
+elif command -v apk &> /dev/null; then
+    apk add gperf gettext-dev util-linux-dev
+elif command -v apt &> /dev/null; then
+    apt install gperf gettext uuid-dev
+else
+    exit 1
+fi
+
 install_freetype
 install_fontconfig
