@@ -38,6 +38,9 @@ cdef class Blanks:
         if self._ptr is not NULL:
             c_impl.FcBlanksDestroy(self._ptr)
 
+    cdef intptr_t ptr(self):
+        return <intptr_t>self._ptr
+
     @classmethod
     def create(cls) -> Blanks:
         ptr = c_impl.FcBlanksCreate()
@@ -67,6 +70,9 @@ cdef class Config:
     def __dealloc__(self):
         if self._ptr is not NULL:
             c_impl.FcConfigDestroy(self._ptr)
+
+    cdef intptr_t ptr(self):
+        return <intptr_t>self._ptr
 
     @classmethod
     def create(cls) -> Config:
@@ -107,6 +113,9 @@ cdef class CharSet:
         if self._ptr is not NULL:
             c_impl.FcCharSetDestroy(self._ptr)
 
+    cdef intptr_t ptr(self):
+        return <intptr_t>self._ptr
+
     @classmethod
     def create(cls) -> CharSet:
         """Create a charset"""
@@ -133,7 +142,7 @@ cdef class Pattern:
         if self._owner and self._ptr is not NULL:
             c_impl.FcPatternDestroy(self._ptr)
 
-    cpdef int ptr(self):
+    cdef intptr_t ptr(self):
         return <intptr_t>self._ptr
 
     @classmethod
@@ -144,6 +153,11 @@ cdef class Pattern:
             raise MemoryError()
         return cls(<intptr_t>ptr)
 
+    def copy(self) -> Pattern:
+        """Copy a pattern"""
+        ptr = c_impl.FcPatternDuplicate(self._ptr)
+        return Pattern(<intptr_t>ptr)
+
     @classmethod
     def parse(cls, name: str) -> Pattern:
         """Parse a pattern string"""
@@ -152,8 +166,29 @@ cdef class Pattern:
             raise ValueError("Invalid name: %s" % name)
         return cls(<intptr_t>ptr)
 
-    def print(self) -> None:
-        c_impl.FcPatternPrint(self._ptr)
+    def __len__(self) -> int:
+        return c_impl.FcPatternObjectCount(self._ptr)
+
+    def __eq__(self, pattern: Pattern) -> bool:
+        return <bint>c_impl.FcPatternEqual(self._ptr, pattern._ptr)
+
+    def equal_subset(self, pattern: Pattern, object_set: ObjectSet) -> bool:
+        """Compare portions of patterns"""
+        return <bint>c_impl.FcPatternEqualSubset(self._ptr, pattern._ptr, object_set._ptr)
+
+    def subset(self, object_set: ObjectSet) -> Pattern:
+        """Filter the objects of pattern"""
+        ptr = c_impl.FcPatternFilter(self._ptr, object_set._ptr)
+        return Pattern(<intptr_t>ptr)
+
+    def __hash__(self) -> int:
+        return <int>c_impl.FcPatternHash(self._ptr)
+
+    def add(self, key: str, value: object, append: bool = True) -> bool:
+        cdef c_impl.FcValue fc_value
+        # TODO: Convert python value to fc_value
+        # TODO: Map<key, FcType>, then convert value to the corresponding type
+        return <bint>c_impl.FcPatternAdd(self._ptr, key.encode("utf-8"), fc_value, append)
 
     def __iter__(self) -> Iterator[Tuple[str, Any]]:
         cdef c_impl.FcPatternIter it
@@ -176,8 +211,39 @@ cdef class Pattern:
             if not <bint>c_impl.FcPatternIterNext(self._ptr, &it):
                 break
 
+    def print(self) -> None:
+        c_impl.FcPatternPrint(self._ptr)
+
 
     # TODO: Implement me!
+
+
+
+cdef void _ObjectToFcValue(object value, c_impl.FcValue* fc_value):
+    assert fc_value is not NULL
+    if fc_value[0].type == c_impl.FcTypeBool:
+        fc_value[0].u.b = <c_impl.FcBool>value
+    elif fc_value[0].type == c_impl.FcTypeDouble:
+        fc_value[0].u.d = <double>value
+    elif fc_value[0].type == c_impl.FcTypeInteger:
+        fc_value[0].u.i = <int>value
+    elif fc_value[0].type == c_impl.FcTypeString:
+        # TODO: How to allocate memory-safe string?
+        raise NotImplementedError()
+    elif fc_value[0].type == c_impl.FcTypeCharSet:
+        raise NotImplementedError()
+    elif fc_value[0].type == c_impl.FcTypeLangSet:
+        raise NotImplementedError()
+    elif fc_value[0].type == c_impl.FcTypeFTFace:
+        raise NotImplementedError()
+    elif fc_value[0].type == c_impl.FcTypeMatrix:
+        raise NotImplementedError()
+    elif fc_value[0].type == c_impl.FcTypeRange:
+        raise NotImplementedError()
+    elif fc_value[0].type == c_impl.FcTypeVoid:
+        value[0].u.f = <intptr_t>value
+    else:
+        raise ValueError("Unknown FcType specified")
 
 
 cdef object _FcValueToObject(c_impl.FcValue* value):
@@ -252,7 +318,7 @@ cdef class ObjectSet:
         if self._owner and self._ptr is not NULL:
             c_impl.FcObjectSetDestroy(self._ptr)
 
-    cpdef int ptr(self):
+    cdef intptr_t ptr(self):
         return <intptr_t>self._ptr
 
     @classmethod
@@ -283,6 +349,9 @@ cdef class FontSet:
     def __dealloc__(self):
         if self._ptr is not NULL:
             c_impl.FcFontSetDestroy(self._ptr)
+
+    cdef intptr_t ptr(self):
+        return <intptr_t>self._ptr
 
     @classmethod
     def create(cls) -> FontSet:
