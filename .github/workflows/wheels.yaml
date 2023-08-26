@@ -18,6 +18,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: true
 
       - uses: actions/setup-python@v3
 
@@ -30,11 +32,13 @@ jobs:
           CIBW_ARCHS_LINUX: x86_64
           CIBW_ARCHS_MACOS: x86_64
           CIBW_SKIP: cp36* cp37* pp* cp38-macos*
-          CIBW_BEFORE_ALL_LINUX: bash {project}/scripts/prepare_linux.sh
+          CIBW_BEFORE_ALL_LINUX: bash {project}/scripts/build_third_party.sh
           CIBW_BEFORE_BUILD: git clean -xf && rm -rf {project}/build
           CIBW_ENVIRONMENT_LINUX: >
-            LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib
-            PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/lib/pkgconfig
+            LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+            PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig
+          CIBW_ENVIRONMENT_MACOS: >
+            LIBTOOLIZE=glibtoolize
           CIBW_TEST_REQUIRES: pytest
           CIBW_TEST_COMMAND: pytest {project}/tests
 
