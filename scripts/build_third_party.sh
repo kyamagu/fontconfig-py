@@ -2,9 +2,6 @@
 
 set -eux
 
-FREETYPE_VERSION=${FREETYPE_VERSION:-"VER-2-13-0"}
-FONTCONFIG_VERSION=${FONTCONFIG_VERSION:-"2.14.0"}
-
 build_freetype() {
     cd third_party/freetype
     ./autogen.sh
