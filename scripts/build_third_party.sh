@@ -24,14 +24,14 @@ build_fontconfig() {
 }
 
 # Install build dependencies
-if command -v yum &> /dev/null; then
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    brew install gperftools gettext automake
+elif command -v yum &> /dev/null; then
     yum --disablerepo=epel install -y gperf gettext-devel libuuid-devel
 elif command -v apk &> /dev/null; then
     apk add gperf gettext-dev util-linux-dev
 elif command -v apt &> /dev/null; then
-    apt install gperf gettext uuid-dev
-elif command -v brew &> /dev/null; then
-    brew install gperftools gettext automake
+    apt -y install gperf gettext uuid-dev
 else
     exit 1
 fi
