@@ -32,7 +32,7 @@ jobs:
           CIBW_ARCHS_LINUX: x86_64
           CIBW_ARCHS_MACOS: x86_64
           CIBW_SKIP: cp36* cp37* pp* cp38-macos*
-          CIBW_BEFORE_ALL: bash {project}/scripts/build_third_party.sh
+          CIBW_BEFORE_LINUX: bash {project}/scripts/build_third_party.sh
           CIBW_BEFORE_BUILD: git clean -xf && rm -rf {project}/build
           CIBW_ENVIRONMENT_LINUX: >
             LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib

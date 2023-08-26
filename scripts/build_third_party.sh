@@ -25,6 +25,7 @@ build_fontconfig() {
 
 # Install build dependencies
 if [[ "$OSTYPE" == "darwin"* ]]; then
+    # TODO: This will conflict with brew-installed freetype and fontconfig
     brew install gperftools gettext automake
 elif command -v yum &> /dev/null; then
     yum --disablerepo=epel install -y gperf gettext-devel libuuid-devel
