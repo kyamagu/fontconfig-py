@@ -51,8 +51,40 @@ def test_Pattern_create() -> None:
     del pattern
 
 
+def test_Pattern_copy(pattern: fontconfig.Pattern) -> None:
+    assert isinstance(pattern.copy(), fontconfig.Pattern)
+
+
 def test_Pattern_parse(pattern: fontconfig.Pattern) -> None:
     assert isinstance(pattern, fontconfig.Pattern)
+
+
+def test_Pattern_len(pattern: fontconfig.Pattern) -> None:
+    assert isinstance(len(pattern), int)
+
+
+def test_Pattern_eq(pattern: fontconfig.Pattern) -> None:
+    assert pattern == pattern
+
+
+def test_Pattern_hash(pattern: fontconfig.Pattern) -> None:
+    assert isinstance(hash(pattern), int)
+
+
+def test_Pattern_equal_subset(pattern: fontconfig.Pattern) -> None:
+    object_set = fontconfig.ObjectSet.create()
+    object_set.add("lang")
+    assert pattern.equal_subset(pattern, object_set)
+
+
+def test_Pattern_subset(pattern: fontconfig.Pattern) -> None:
+    object_set = fontconfig.ObjectSet.create()
+    object_set.add("lang")
+    assert isinstance(pattern.subset(object_set), fontconfig.Pattern)
+
+
+# def test_Pattern_add(pattern: fontconfig.Pattern) -> None:
+#     pattern.add("family", b"Arial")
 
 
 def test_Pattern_iter(pattern: fontconfig.Pattern) -> None:

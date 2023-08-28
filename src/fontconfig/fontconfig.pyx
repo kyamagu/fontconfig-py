@@ -10,6 +10,7 @@ ctypedef Py_ssize_t intptr_t
 
 
 def get_version() -> str:
+    """Get fontconfig version."""
     version = c_impl.FcGetVersion()
     major = version / 10000
     minor = (version % 10000) / 100
@@ -186,8 +187,10 @@ cdef class Pattern:
 
     def add(self, key: str, value: object, append: bool = True) -> bool:
         cdef c_impl.FcValue fc_value
-        # TODO: Convert python value to fc_value
-        # TODO: Map<key, FcType>, then convert value to the corresponding type
+        # TODO: Check valid key and object type
+        # fc_value.type = value
+        raise NotImplementedError()
+        _ObjectToFcValue(value, &fc_value)
         return <bint>c_impl.FcPatternAdd(self._ptr, key.encode("utf-8"), fc_value, append)
 
     def __iter__(self) -> Iterator[Tuple[str, Any]]:
@@ -228,8 +231,8 @@ cdef void _ObjectToFcValue(object value, c_impl.FcValue* fc_value):
     elif fc_value[0].type == c_impl.FcTypeInteger:
         fc_value[0].u.i = <int>value
     elif fc_value[0].type == c_impl.FcTypeString:
-        # TODO: How to allocate memory-safe string?
-        raise NotImplementedError()
+        # NOTE: When Python garbage collects bytes, this pointer becomes invalid!
+        fc_value[0].u.s = <const c_impl.FcChar8*>value
     elif fc_value[0].type == c_impl.FcTypeCharSet:
         raise NotImplementedError()
     elif fc_value[0].type == c_impl.FcTypeLangSet:
@@ -258,11 +261,13 @@ cdef object _FcValueToObject(c_impl.FcValue* value):
         return <bytes>(value[0].u.s).decode("utf-8")
     elif value[0].type == c_impl.FcTypeCharSet:
         # TODO: Implement me!
+        logger.warning("CharSet is not supported yet")
         return None
     elif value[0].type == c_impl.FcTypeLangSet:
         return _FcLangSetToObject(value[0].u.l)
     elif value[0].type == c_impl.FcTypeFTFace:
         # TODO: Implement me!
+        logger.warning("FTFace is not supported yet")
         return None
     elif value[0].type == c_impl.FcTypeMatrix:
         return (
@@ -376,7 +381,7 @@ cdef class FontSet:
         return cls(<intptr_t>ptr)
 
 
-def query(where: str, select: Iterable[str] = ("family",)):
+def query(where: str = "", select: Iterable[str] = ("family",)):
     """Query fonts.
 
     Selects fonts matching pattern, creates patterns from those fonts containing
