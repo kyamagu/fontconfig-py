@@ -83,8 +83,8 @@ def test_Pattern_subset(pattern: fontconfig.Pattern) -> None:
     assert isinstance(pattern.subset(object_set), fontconfig.Pattern)
 
 
-# def test_Pattern_add(pattern: fontconfig.Pattern) -> None:
-#     pattern.add("family", b"Arial")
+def test_Pattern_add(pattern: fontconfig.Pattern) -> None:
+    pattern.add(b"family", b"Arial")
 
 
 def test_Pattern_iter(pattern: fontconfig.Pattern) -> None:
