@@ -1,6 +1,7 @@
 # fontconfig-py
 
 [![PyPI version](https://badge.fury.io/py/fontconfig-py.svg)](https://pypi.org/project/fontconfig-py)
+[![Docs status](https://readthedocs.org/projects/fontconfig-py/badge/)](https://fontconfig-py.readthedocs.io/)
 
 Python bindings to [fontconfig](https://www.freedesktop.org/wiki/Software/fontconfig/).
 
