@@ -2,7 +2,9 @@ import atexit
 import logging
 from typing import Any, Dict, Iterable, Iterator, List, Tuple
 
+from cython.cimports.libc.stdlib import free
 cimport fontconfig._fontconfig as c_impl
+
 
 logger = logging.getLogger(__name__)
 
@@ -231,6 +233,14 @@ cdef class Pattern:
         else:
             raise RuntimeError()
 
+    def delete(self, key: str) -> bool:
+        """Delete a property from a pattern"""
+        return <bint>c_impl.FcPatternDel(self._ptr, key.encode("utf-8"))
+
+    def remove(self, key: str, index: int = 0) -> bool:
+        """Remove one object of the specified type from the pattern"""
+        return <bint>c_impl.FcPatternRemove(self._ptr, key.encode("utf-8"), index)
+
     def __iter__(self) -> Iterator[Tuple[str, Any]]:
         cdef c_impl.FcPatternIter it
         cdef c_impl.FcValue value
@@ -268,6 +278,15 @@ cdef class Pattern:
           (default 1).
         """
         c_impl.FcDefaultSubstitute(self._ptr)
+
+    def format(self, fmt: str) -> None:
+        """Format a pattern into a string according to a format specifier"""
+        result = c_impl.FcPatternFormat(self._ptr, fmt.encode("utf-8"))
+        if result is NULL:
+            raise ValueError("Invalid format: %s" % fmt)
+        py_str = <bytes>(result).decode("utf-8")
+        free(result)
+        return py_str
 
 
 cdef void _ObjectToFcValue(object value, c_impl.FcValue* fc_value):

@@ -112,6 +112,16 @@ def test_Pattern_get(pattern: fontconfig.Pattern) -> None:
         pattern.get("ftface")
 
 
+def test_Pattern_del() -> None:
+    pattern = fontconfig.Pattern.parse(":aspect=1.0")
+    assert isinstance(pattern.remove("aspect"), bool)
+
+
+def test_Pattern_remove() -> None:
+    pattern = fontconfig.Pattern.parse(":aspect=1.0")
+    assert isinstance(pattern.remove("aspect", 0), bool)
+
+
 def test_Pattern_iter(pattern: fontconfig.Pattern) -> None:
     dict(pattern)
 
@@ -122,6 +132,10 @@ def test_Pattern_unparse(pattern: fontconfig.Pattern) -> None:
 
 def test_Pattern_default_substitute(pattern: fontconfig.Pattern) -> None:
     pattern.default_substitute()
+
+
+def test_Pattern_default_format(pattern: fontconfig.Pattern) -> None:
+    assert isinstance(pattern.format("%{lang}"), str)
 
 
 @pytest.fixture
