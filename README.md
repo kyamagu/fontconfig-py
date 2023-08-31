@@ -10,7 +10,9 @@ Currently Linux and macOS are supported.
 
 Install from the PyPI:
 
-   pip install fontconfig-py
+```bash
+pip install fontconfig-py
+```
 
 ## Usage
 
