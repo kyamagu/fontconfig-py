@@ -1,5 +1,7 @@
 # fontconfig-py
 
+[![PyPI version](https://badge.fury.io/py/fontconfig-py.svg)](https://pypi.org/project/fontconfig-py)
+
 Python bindings to [fontconfig](https://www.freedesktop.org/wiki/Software/fontconfig/).
 
 Currently Linux and macOS are supported.
