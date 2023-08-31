@@ -22,7 +22,7 @@ def get_version() -> str:
 
 cdef class Blanks:
     """
-    An Blanks object holds a list of Unicode chars which are expected to be
+    A Blanks object holds a list of Unicode chars which are expected to be
     blank when drawn. When scanning new fonts, any glyphs which are empty and
     not in this list will be assumed to be broken and not placed in the
     FcCharSet associated with the font. This provides a significantly more
@@ -46,25 +46,26 @@ cdef class Blanks:
 
     @classmethod
     def create(cls) -> Blanks:
+        """Create a Blanks"""
         ptr = c_impl.FcBlanksCreate()
         if ptr is NULL:
             raise MemoryError()
         return cls(<intptr_t>ptr)
 
     def add(self, ucs4: int) -> bool:
-        """Add a character to an Blanks"""
+        """Add a character to a Blanks"""
         return <bint>c_impl.FcBlanksAdd(self._ptr, <c_impl.FcChar32>ucs4)
 
     def is_member(self, ucs4: int) -> bool:
-        """Query membership in an Blanks"""
+        """Query membership in a Blanks"""
         return <bint>c_impl.FcBlanksIsMember(self._ptr, <c_impl.FcChar32>ucs4)
 
 
 cdef class Config:
-    """An Config object holds the internal representation of a configuration.
+    """A Config object holds the internal representation of a configuration.
 
     There is a default configuration which applications may use by passing 0 to
-    any function using the data within an Config.
+    any function using the data within a Config.
     """
     cdef c_impl.FcConfig* _ptr
 
@@ -103,7 +104,7 @@ cdef class Config:
 
 
 cdef class CharSet:
-    """An CharSet is a boolean array indicating a set of Unicode chars.
+    """A CharSet is a boolean array indicating a set of Unicode chars.
 
     Those associated with a font are marked constant and cannot be edited.
     FcCharSets may be reference counted internally to reduce memory consumption;
@@ -134,7 +135,7 @@ cdef class CharSet:
 
 
 cdef class Pattern:
-    """An Pattern is an opaque type that holds both patterns to match against
+    """A Pattern is an opaque type that holds both patterns to match against
     the available fonts, as well as the information about each font.
 
     Example::
@@ -409,22 +410,25 @@ cdef class ObjectSet:
 
     @classmethod
     def create(cls) -> ObjectSet:
+        """Create an ObjectSet"""
         ptr = c_impl.FcObjectSetCreate()
         if ptr is NULL:
             raise MemoryError()
         return cls(<intptr_t>ptr)
 
     def add(self, value: str) -> bool:
+        """Add to an object set"""
         return c_impl.FcObjectSetAdd(self._ptr, value.encode("utf-8"))
 
     def build(self, values: Iterable[str]) -> None:
+        """Build object set from iterable"""
         for value in values:
             if not self.add(value):
                 raise MemoryError()
 
 
 cdef class FontSet:
-    """An FontSet simply holds a list of patterns; these are used to return
+    """A FontSet simply holds a list of patterns; these are used to return
     the results of listing available fonts.
     """
     cdef c_impl.FcFontSet* _ptr
@@ -467,74 +471,76 @@ cdef class FontSet:
 
 
 def query(where: str = "", select: Iterable[str] = ("family",)) -> List[Dict[str, Any]]:
-    """High-level function to query fonts.
-
-    The following font properties are supported in the query.
-
-        Property       Type    Description
-        -----------------------------
-        family         String  Font family names
-        familylang     String  Language corresponding to each family name
-        style          String  Font style. Overrides weight and slant
-        stylelang      String  Language corresponding to each style name
-        fullname       String  Font face full name where different from family
-                               and family + style
-        fullnamelang   String  Language corresponding to each fullname
-        slant          Int     Italic, oblique or roman
-        weight         Int     Light, medium, demibold, bold or black
-        width          Int     Condensed, normal or expanded
-        size           Double  Point size
-        aspect         Double  Stretches glyphs horizontally before hinting
-        pixelsize      Double  Pixel size
-        spacing        Int     Proportional, dual-width, monospace or charcell
-        foundry        String  Font foundry name
-        antialias      Bool    Whether glyphs can be antialiased
-        hintstyle      Int     Automatic hinting style
-        hinting        Bool    Whether the rasterizer should use hinting
-        verticallayout Bool    Use vertical layout
-        autohint       Bool    Use autohinter instead of normal hinter
-        globaladvance  Bool    Use font global advance data (deprecated)
-        file           String  The filename holding the font relative to the
-                               config's sysroot
-        index          Int     The index of the font within the file
-        ftface         FT_Face Use the specified FreeType face object
-        rasterizer     String  Which rasterizer is in use (deprecated)
-        outline        Bool    Whether the glyphs are outlines
-        scalable       Bool    Whether glyphs can be scaled
-        dpi            Double  Target dots per inch
-        rgba           Int     unknown, rgb, bgr, vrgb, vbgr, none - subpixel geometry
-        scale          Double  Scale factor for point->pixel conversions (deprecated)
-        minspace       Bool    Eliminate leading from line spacing
-        charset        CharSet Unicode chars encoded by the font
-        lang           LangSet Set of RFC-3066-style languages this font supports
-        fontversion    Int     Version number of the font
-        capability     String  List of layout capabilities in the font
-        fontformat     String  String name of the font format
-        embolden       Bool    Rasterizer should synthetically embolden the font
-        embeddedbitmap Bool    Use the embedded bitmap instead of the outline
-        decorative     Bool    Whether the style is a decorative variant
-        lcdfilter      Int     Type of LCD filter
-        namelang       String  Language name to be used for the default value of
-                               familylang, stylelang and fullnamelang
-        fontfeatures   String  List of extra feature tags in OpenType to be enabled
-        prgname        String  Name of the running program
-        hash           String  SHA256 hash value of the font data with "sha256:"
-                               prefix (deprecated)
-        postscriptname String  Font name in PostScript
-        symbol         Bool    Whether font uses MS symbol-font encoding
-        color          Bool    Whether any glyphs have color
-        fontvariations String  comma-separated string of axes in variable font
-        variable       Bool    Whether font is Variable Font
-        fonthashint    Bool    Whether font has hinting
-        order          Int     Order number of the font
+    """
+    High-level function to query fonts.
 
     Example::
 
         fonts = fontconfig.query(":lang=en", select=("family", "familylang"))
+        for font in fonts:
+            print(font["family"])
 
-    :param str where: Query string like ":lang=en:family=Arial".
+    :param str where: Query string like ``":lang=en:family=Arial"``.
     :param Iterable[str] select: Set of font properties to include in the result.
     :return: List of font dict.
+
+
+    The following font properties are supported in the query.
+
+    ==============  =======  =======================================================
+    Property        Type     Description
+    ==============  =======  =======================================================
+    family          String   Font family names
+    familylang      String   Language corresponding to each family name
+    style           String   Font style. Overrides weight and slant
+    stylelang       String   Language corresponding to each style name
+    fullname        String   Font face full name where different from family and family + style
+    fullnamelang    String   Language corresponding to each fullname
+    slant           Int      Italic, oblique or roman
+    weight          Int      Light, medium, demibold, bold or black
+    width           Int      Condensed, normal or expanded
+    size            Double   Point size
+    aspect          Double   Stretches glyphs horizontally before hinting
+    pixelsize       Double   Pixel size
+    spacing         Int      Proportional, dual-width, monospace or charcell
+    foundry         String   Font foundry name
+    antialias       Bool     Whether glyphs can be antialiased
+    hintstyle       Int      Automatic hinting style
+    hinting         Bool     Whether the rasterizer should use hinting
+    verticallayout  Bool     Use vertical layout
+    autohint        Bool     Use autohinter instead of normal hinter
+    globaladvance   Bool     Use font global advance data (deprecated)
+    file            String   The filename holding the font relative to the config's sysroot
+    index           Int      The index of the font within the file
+    ftface          FT_Face  Use the specified FreeType face object
+    rasterizer      String   Which rasterizer is in use (deprecated)
+    outline         Bool     Whether the glyphs are outlines
+    scalable        Bool     Whether glyphs can be scaled
+    dpi             Double   Target dots per inch
+    rgba            Int      unknown, rgb, bgr, vrgb, vbgr, none - subpixel geometry
+    scale           Double   Scale factor for point->pixel conversions (deprecated)
+    minspace        Bool     Eliminate leading from line spacing
+    charset         CharSet  Unicode chars encoded by the font
+    lang            LangSet  Set of RFC-3066-style languages this font supports
+    fontversion     Int      Version number of the font
+    capability      String   List of layout capabilities in the font
+    fontformat      String   String name of the font format
+    embolden        Bool     Rasterizer should synthetically embolden the font
+    embeddedbitmap  Bool     Use the embedded bitmap instead of the outline
+    decorative      Bool     Whether the style is a decorative variant
+    lcdfilter       Int      Type of LCD filter
+    namelang        String   Language name to be used for the default value of familylang, stylelang and fullnamelang
+    fontfeatures    String   List of extra feature tags in OpenType to be enabled
+    prgname         String   Name of the running program
+    hash            String   SHA256 hash value of the font data with "sha256:" prefix (deprecated)
+    postscriptname  String   Font name in PostScript
+    symbol          Bool     Whether font uses MS symbol-font encoding
+    color           Bool     Whether any glyphs have color
+    fontvariations  String   comma-separated string of axes in variable font
+    variable        Bool     Whether font is Variable Font
+    fonthashint     Bool     Whether font has hinting
+    order           Int      Order number of the font
+    ==============  =======  =======================================================
     """
     pattern = Pattern.parse(where)
     object_set = ObjectSet.create()
