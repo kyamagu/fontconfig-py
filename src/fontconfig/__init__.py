@@ -1,3 +1,4 @@
+"""fontconfig package"""
 from .fontconfig import *
 
-__version__ = get_version()  # type: ignore
+__version__ = "0.1.0"
