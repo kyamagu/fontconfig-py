@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 import fontconfig
 import pytest
@@ -83,8 +84,26 @@ def test_Pattern_subset(pattern: fontconfig.Pattern) -> None:
     assert isinstance(pattern.subset(object_set), fontconfig.Pattern)
 
 
-def test_Pattern_add(pattern: fontconfig.Pattern) -> None:
-    pattern.add(b"family", b"Arial")
+@pytest.mark.parametrize("key, value", [
+    ("family", b"Arial"),
+    ("slant", 80),
+    ("aspect", 1.0),
+    ("antialias", True),
+    ("lang", [b"en"]),
+    ("size", (10.0, 10.0)),
+])
+def test_Pattern_add(key: str, value: Any) -> None:
+    pattern = fontconfig.Pattern.create()
+    pattern.add(key, value)
+
+
+@pytest.mark.parametrize("key, value", [
+    ("charset", None),
+])
+def test_Pattern_add_xfail(key: str, value: Any) -> None:
+    pattern = fontconfig.Pattern.create()
+    with pytest.raises(NotImplementedError):
+        pattern.add(key, value)
 
 
 def test_Pattern_iter(pattern: fontconfig.Pattern) -> None:
@@ -100,7 +119,7 @@ def object_set():
 
 def test_query() -> None:
     result = fontconfig.query(
-        where=":lang=ja:family=Hiragino Kaku Gothic Std",
+        where=":lang=en:family=Arial",
         select=("family", "familylang"),
     )
     assert isinstance(result, list)
