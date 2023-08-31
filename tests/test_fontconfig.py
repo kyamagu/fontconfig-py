@@ -106,8 +106,22 @@ def test_Pattern_add_xfail(key: str, value: Any) -> None:
         pattern.add(key, value)
 
 
+def test_Pattern_get(pattern: fontconfig.Pattern) -> None:
+    isinstance(pattern.get("lang"), list)
+    with pytest.raises(KeyError):
+        pattern.get("ftface")
+
+
 def test_Pattern_iter(pattern: fontconfig.Pattern) -> None:
     dict(pattern)
+
+
+def test_Pattern_unparse(pattern: fontconfig.Pattern) -> None:
+    assert isinstance(pattern.unparse(), str)
+
+
+def test_Pattern_default_substitute(pattern: fontconfig.Pattern) -> None:
+    pattern.default_substitute()
 
 
 @pytest.fixture

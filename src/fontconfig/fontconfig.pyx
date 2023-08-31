@@ -1,6 +1,6 @@
 import atexit
 import logging
-from typing import Any, Callable, Iterable, Iterator, Optional, Tuple
+from typing import Any, Dict, Iterable, Iterator, List, Tuple
 
 cimport fontconfig._fontconfig as c_impl
 
@@ -20,13 +20,13 @@ def get_version() -> str:
 
 cdef class Blanks:
     """
-    An FcBlanks object holds a list of Unicode chars which are expected to be
+    An Blanks object holds a list of Unicode chars which are expected to be
     blank when drawn. When scanning new fonts, any glyphs which are empty and
     not in this list will be assumed to be broken and not placed in the
     FcCharSet associated with the font. This provides a significantly more
     accurate CharSet for applications.
 
-    FcBlanks is deprecated and should not be used in newly written code. It is
+    Blanks is deprecated and should not be used in newly written code. It is
     still accepted by some functions for compatibility with older code but will
     be removed in the future.
     """
@@ -50,18 +50,19 @@ cdef class Blanks:
         return cls(<intptr_t>ptr)
 
     def add(self, ucs4: int) -> bool:
-        """Add a character to an FcBlanks"""
+        """Add a character to an Blanks"""
         return <bint>c_impl.FcBlanksAdd(self._ptr, <c_impl.FcChar32>ucs4)
 
     def is_member(self, ucs4: int) -> bool:
+        """Query membership in an Blanks"""
         return <bint>c_impl.FcBlanksIsMember(self._ptr, <c_impl.FcChar32>ucs4)
 
 
 cdef class Config:
-    """An FcConfig object holds the internal representation of a configuration.
+    """An Config object holds the internal representation of a configuration.
 
     There is a default configuration which applications may use by passing 0 to
-    any function using the data within an FcConfig.
+    any function using the data within an Config.
     """
     cdef c_impl.FcConfig* _ptr
 
@@ -93,13 +94,15 @@ cdef class Config:
         return cls(<intptr_t>c_impl.FcConfigReference(NULL))
 
     def upto_date(self) -> bool:
+        """Check timestamps on config files"""
         return <bint>c_impl.FcConfigUptoDate(self._ptr)
 
     # TODO: Implement me!
 
 
 cdef class CharSet:
-    """An FcCharSet is a boolean array indicating a set of Unicode chars.
+    """An CharSet is a boolean array indicating a set of Unicode chars.
+
     Those associated with a font are marked constant and cannot be edited.
     FcCharSets may be reference counted internally to reduce memory consumption;
     this may be visible to applications as the result of FcCharSetCopy may
@@ -129,8 +132,20 @@ cdef class CharSet:
 
 
 cdef class Pattern:
-    """An FcPattern is an opaque type that holds both patterns to match against
+    """An Pattern is an opaque type that holds both patterns to match against
     the available fonts, as well as the information about each font.
+
+    Example::
+
+        # Create a new pattern.
+        pattern = fontconfig.Pattern.create()
+        pattern.add("family", "Arial")
+
+        # Create a new pattern from str.
+        pattern = fontconfig.Pattern.parse(":lang=en:family=Arial")
+
+        # Pattern is iterable. Can convert to a Python dict.
+        pattern_dict = dict(pattern)
     """
     cdef c_impl.FcPattern* _ptr
     cdef bint _owner
@@ -167,6 +182,11 @@ cdef class Pattern:
             raise ValueError("Invalid name: %s" % name)
         return cls(<intptr_t>ptr)
 
+    def unparse(self) -> str:
+        """Convert a pattern back into a string that can be parsed."""
+        name = <bytes>(c_impl.FcNameUnparse(self._ptr))
+        return name.decode("utf-8")
+
     def __len__(self) -> int:
         return c_impl.FcPatternObjectCount(self._ptr)
 
@@ -186,6 +206,7 @@ cdef class Pattern:
         return <int>c_impl.FcPatternHash(self._ptr)
 
     def add(self, key: str, value: object, append: bool = True) -> bool:
+        """Add a value to a pattern"""
         cdef c_impl.FcValue fc_value
         key_ = key.encode("utf-8")
         object_type = c_impl.FcNameGetObjectType(key_)
@@ -194,6 +215,21 @@ cdef class Pattern:
         fc_value.type = object_type.type
         _ObjectToFcValue(value, &fc_value)
         return <bint>c_impl.FcPatternAdd(self._ptr, key_, fc_value, append)
+
+    def get(self, key: str, index: int = 0) -> Any:
+        """Return a value from a pattern"""
+        cdef c_impl.FcValue fc_value
+        result = c_impl.FcPatternGet(self._ptr, key.encode("utf-8"), index, &fc_value)
+        if result == c_impl.FcResultMatch:
+            return _FcValueToObject(&fc_value)
+        elif result == c_impl.FcResultNoMatch:
+            raise KeyError("Invalid key %s" % key)
+        elif result == c_impl.FcResultNoId:
+            raise KeyError("Invalid index %d" % index)
+        elif result == c_impl.FcResultOutOfMemory:
+            raise MemoryError()
+        else:
+            raise RuntimeError()
 
     def __iter__(self) -> Iterator[Tuple[str, Any]]:
         cdef c_impl.FcPatternIter it
@@ -217,7 +253,21 @@ cdef class Pattern:
                 break
 
     def print(self) -> None:
+        """Print a pattern for debugging"""
         c_impl.FcPatternPrint(self._ptr)
+
+    def default_substitute(self) -> None:
+        """Perform default substitutions in a pattern.
+
+        Supplies default values for underspecified font patterns:
+
+        - Patterns without a specified style or weight are set to Medium
+        - Patterns without a specified style or slant are set to Roman
+        - Patterns without a specified pixel size are given one computed from
+          any specified point size (default 12), dpi (default 75) and scale
+          (default 1).
+        """
+        c_impl.FcDefaultSubstitute(self._ptr)
 
 
 cdef void _ObjectToFcValue(object value, c_impl.FcValue* fc_value):
@@ -269,7 +319,8 @@ cdef object _FcValueToObject(c_impl.FcValue* value):
     elif value[0].type == c_impl.FcTypeInteger:
         return value[0].u.i
     elif value[0].type == c_impl.FcTypeString:
-        return <bytes>(value[0].u.s).decode("utf-8")
+        py_bytes = <bytes>(value[0].u.s)
+        return py_bytes.decode("utf-8")
     elif value[0].type == c_impl.FcTypeCharSet:
         logger.warning("CharSet is not supported yet")
         return None
@@ -304,7 +355,7 @@ cdef object _FcLangSetToObject(const c_impl.FcLangSet* lang_set):
         value = c_impl.FcStrListNext(str_list)
         if value is NULL:
             break
-        langs.append(<bytes>(value).decode("utf-8"))
+        langs.append(<bytes>(value))
     c_impl.FcStrListDone(str_list)
     c_impl.FcStrSetDestroy(str_set)
     return langs
@@ -318,8 +369,10 @@ cdef object _FcRangeToObject(const c_impl.FcRange* range):
 
 
 cdef class ObjectSet:
-    """An FcObjectSet holds a list of pattern property names; it is used to
-    indicate which properties are to be returned in the patterns from FcFontList.
+    """An ObjectSet holds a list of pattern property names.
+
+    It is used to indicate which properties are to be returned in the patterns
+    from FontList.
     """
     cdef c_impl.FcObjectSet* _ptr
     cdef bint _owner
@@ -352,7 +405,7 @@ cdef class ObjectSet:
 
 
 cdef class FontSet:
-    """An FcFontSet simply holds a list of patterns; these are used to return
+    """An FontSet simply holds a list of patterns; these are used to return
     the results of listing available fonts.
     """
     cdef c_impl.FcFontSet* _ptr
@@ -369,15 +422,18 @@ cdef class FontSet:
 
     @classmethod
     def create(cls) -> FontSet:
+        """Create a FontSet"""
         ptr = c_impl.FcFontSetCreate()
         if ptr is NULL:
             raise MemoryError()
         return cls(<intptr_t>ptr)
 
     def add(self, pattern: Pattern) -> bool:
+        """Add to a font set"""
         return c_impl.FcFontSetAdd(self._ptr, pattern._ptr)
 
     def print(self) -> None:
+        """Print a set of patterns to stdout"""
         c_impl.FcFontSetPrint(self._ptr)
 
     def __iter__(self) -> Iterator[Pattern]:
@@ -386,17 +442,80 @@ cdef class FontSet:
 
     @classmethod
     def query(cls, pattern: Pattern, object_set: ObjectSet) -> FontSet:
+        """Query FontSet from the specified Pattern and ObjectSet."""
         ptr = c_impl.FcFontList(NULL, pattern._ptr, object_set._ptr)
         return cls(<intptr_t>ptr)
 
 
-def query(where: str = "", select: Iterable[str] = ("family",)):
-    """Query fonts.
+def query(where: str = "", select: Iterable[str] = ("family",)) -> List[Dict[str, Any]]:
+    """High-level function to query fonts.
 
-    Selects fonts matching pattern, creates patterns from those fonts containing
-    only the objects in os and returns the set of unique such patterns. If
-    config is NULL, the default configuration is checked to be up to date, and
-    used.
+    The following font properties are supported in the query.
+
+        Property       Type    Description
+        -----------------------------
+        family         String  Font family names
+        familylang     String  Language corresponding to each family name
+        style          String  Font style. Overrides weight and slant
+        stylelang      String  Language corresponding to each style name
+        fullname       String  Font face full name where different from family
+                               and family + style
+        fullnamelang   String  Language corresponding to each fullname
+        slant          Int     Italic, oblique or roman
+        weight         Int     Light, medium, demibold, bold or black
+        width          Int     Condensed, normal or expanded
+        size           Double  Point size
+        aspect         Double  Stretches glyphs horizontally before hinting
+        pixelsize      Double  Pixel size
+        spacing        Int     Proportional, dual-width, monospace or charcell
+        foundry        String  Font foundry name
+        antialias      Bool    Whether glyphs can be antialiased
+        hintstyle      Int     Automatic hinting style
+        hinting        Bool    Whether the rasterizer should use hinting
+        verticallayout Bool    Use vertical layout
+        autohint       Bool    Use autohinter instead of normal hinter
+        globaladvance  Bool    Use font global advance data (deprecated)
+        file           String  The filename holding the font relative to the
+                               config's sysroot
+        index          Int     The index of the font within the file
+        ftface         FT_Face Use the specified FreeType face object
+        rasterizer     String  Which rasterizer is in use (deprecated)
+        outline        Bool    Whether the glyphs are outlines
+        scalable       Bool    Whether glyphs can be scaled
+        dpi            Double  Target dots per inch
+        rgba           Int     unknown, rgb, bgr, vrgb, vbgr, none - subpixel geometry
+        scale          Double  Scale factor for point->pixel conversions (deprecated)
+        minspace       Bool    Eliminate leading from line spacing
+        charset        CharSet Unicode chars encoded by the font
+        lang           LangSet Set of RFC-3066-style languages this font supports
+        fontversion    Int     Version number of the font
+        capability     String  List of layout capabilities in the font
+        fontformat     String  String name of the font format
+        embolden       Bool    Rasterizer should synthetically embolden the font
+        embeddedbitmap Bool    Use the embedded bitmap instead of the outline
+        decorative     Bool    Whether the style is a decorative variant
+        lcdfilter      Int     Type of LCD filter
+        namelang       String  Language name to be used for the default value of
+                               familylang, stylelang and fullnamelang
+        fontfeatures   String  List of extra feature tags in OpenType to be enabled
+        prgname        String  Name of the running program
+        hash           String  SHA256 hash value of the font data with "sha256:"
+                               prefix (deprecated)
+        postscriptname String  Font name in PostScript
+        symbol         Bool    Whether font uses MS symbol-font encoding
+        color          Bool    Whether any glyphs have color
+        fontvariations String  comma-separated string of axes in variable font
+        variable       Bool    Whether font is Variable Font
+        fonthashint    Bool    Whether font has hinting
+        order          Int     Order number of the font
+
+    Example::
+
+        fonts = fontconfig.query(":lang=en", select=("family", "familylang"))
+
+    :param str where: Query string like ":lang=en:family=Arial".
+    :param Iterable[str] select: Set of font properties to include in the result.
+    :return: List of font dict.
     """
     pattern = Pattern.parse(where)
     object_set = ObjectSet.create()
