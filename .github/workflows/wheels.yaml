@@ -40,13 +40,10 @@ jobs:
           CIBW_ENVIRONMENT_LINUX: >
             LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
             PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
-            CFLAGS="-ffunction-sections -fdata-sections"
-            LDFLAGS="-Wl,--gc-sections"
           CIBW_ENVIRONMENT_MACOS: >
             LIBTOOLIZE=glibtoolize
             DYLD_LIBRARY_PATH=/usr/local/lib:$DYLD_LIBRARY_PATH
             PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
-            LDFLAGS="-dead_strip"
           CIBW_TEST_REQUIRES: pytest
           CIBW_TEST_COMMAND: pytest {project}/tests
           CIBW_TEST_SKIP: "*_arm64"
