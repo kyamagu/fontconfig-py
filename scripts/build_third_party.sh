@@ -2,18 +2,10 @@
 
 set -ex
 
-# Set up cross-compilation on macOS.
-HOST_ARCH=${HOST_ARCH:-$(gcc -dumpmachine)}
-if [[ $OSTYPE == "darwin"* ]] && [[ "$_PYTHON_HOST_PLATFORM" == *"arm64" ]]; then
-    HOST_ARCH="arm64-apple-darwin"
-fi
-
-
 build_freetype() {
     cd third_party/freetype
     ./autogen.sh
     ./configure \
-        --host=$HOST_ARCH \
         --disable-shared \
         --with-pic \
         --without-bzip2 \
@@ -29,7 +21,6 @@ build_freetype() {
 build_fontconfig() {
     cd third_party/fontconfig
     ./autogen.sh \
-        --host=$HOST_ARCH \
         --disable-shared \
         --with-pic \
         --disable-nls \
