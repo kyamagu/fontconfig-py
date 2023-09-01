@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eux
+set -ex
 
 export CFLAGS="$CFLAGS -fPIC"
 
