@@ -6,7 +6,7 @@ ext_modules = [
     Extension(
         "fontconfig.fontconfig",
         sources=["src/fontconfig/fontconfig.pyx"],
-        libraries=["fontconfig", "freetype", "expat", "z", "bz2"],
+        libraries=["fontconfig", "freetype", "expat", "z"],
     ),
 ]
 
