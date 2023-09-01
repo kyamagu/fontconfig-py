@@ -35,15 +35,21 @@ jobs:
           CIBW_ARCHS_LINUX: x86_64
           CIBW_ARCHS_MACOS: x86_64
           CIBW_SKIP: cp36* cp37* pp* cp38-macos*
-          CIBW_BEFORE_ALL_LINUX: bash {project}/scripts/build_third_party.sh
+          CIBW_BEFORE_ALL: bash {project}/scripts/build_third_party.sh
           CIBW_BEFORE_BUILD: git clean -xf && rm -rf {project}/build
           CIBW_ENVIRONMENT_LINUX: >
-            LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
-            PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig
+            LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+            PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
+            CFLAGS="-ffunction-sections -fdata-sections"
+            LDFLAGS="-Wl,--gc-sections"
           CIBW_ENVIRONMENT_MACOS: >
             LIBTOOLIZE=glibtoolize
+            DYLD_LIBRARY_PATH=/usr/local/lib:$DYLD_LIBRARY_PATH
+            PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
+            LDFLAGS="-dead_strip"
           CIBW_TEST_REQUIRES: pytest
           CIBW_TEST_COMMAND: pytest {project}/tests
+          CIBW_TEST_SKIP: "*_arm64 *_aarch64"
 
       - uses: actions/upload-artifact@v3
         with:
