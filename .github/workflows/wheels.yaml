@@ -32,7 +32,7 @@ jobs:
       - name: Build wheels
         run: python -m cibuildwheel --output-dir dist
         env:
-          CIBW_ARCHS_LINUX: x86_64
+          CIBW_ARCHS_LINUX: x86_64 aarch64
           CIBW_ARCHS_MACOS: x86_64
           CIBW_SKIP: cp36* cp37* pp* cp38-macos*
           CIBW_BEFORE_ALL_LINUX: bash {project}/scripts/build_third_party.sh
@@ -44,6 +44,7 @@ jobs:
             LIBTOOLIZE=glibtoolize
           CIBW_TEST_REQUIRES: pytest
           CIBW_TEST_COMMAND: pytest {project}/tests
+          CIBW_TEST_SKIP: "*_arm64"
 
       - uses: actions/upload-artifact@v3
         with:
