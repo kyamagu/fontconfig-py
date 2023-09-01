@@ -5,7 +5,7 @@ set -eux
 build_freetype() {
     cd third_party/freetype
     ./autogen.sh
-    ./configure --prefix=/tmp/build
+    ./configure
     make
     make -j
     make install
@@ -14,7 +14,7 @@ build_freetype() {
 
 build_fontconfig() {
     cd third_party/fontconfig
-    ./autogen.sh --prefix=/tmp/build
+    ./autogen.sh
     make -j
     make install
     cd ../..
@@ -22,7 +22,7 @@ build_fontconfig() {
 
 # Install build dependencies
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    # TODO: This will conflict with brew-installed freetype and fontconfig
+    brew uninstall --ignore-dependencies -f fontconfig freetype
     brew install gperftools gettext automake
 elif command -v yum &> /dev/null; then
     yum --disablerepo=epel install -y gperf gettext-devel libuuid-devel
