@@ -10,6 +10,7 @@ ext_modules = [
     ),
 ]
 
+
 def build(setup_kwargs):
     options = dict(
         ext_modules=cythonize(ext_modules),

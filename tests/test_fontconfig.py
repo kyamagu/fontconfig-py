@@ -15,7 +15,7 @@ def test_Blanks() -> None:
     try:
         blanks = fontconfig.Blanks.create()
         del blanks
-    except MemoryError as e:
+    except MemoryError:
         logger.warning("Memory error")  # Not expected...
 
 
@@ -84,22 +84,28 @@ def test_Pattern_subset(pattern: fontconfig.Pattern) -> None:
     assert isinstance(pattern.subset(object_set), fontconfig.Pattern)
 
 
-@pytest.mark.parametrize("key, value", [
-    ("family", b"Arial"),
-    ("slant", 80),
-    ("aspect", 1.0),
-    ("antialias", True),
-    ("lang", [b"en"]),
-    ("size", (10.0, 10.0)),
-])
+@pytest.mark.parametrize(
+    "key, value",
+    [
+        ("family", b"Arial"),
+        ("slant", 80),
+        ("aspect", 1.0),
+        ("antialias", True),
+        ("lang", [b"en"]),
+        ("size", (10.0, 10.0)),
+    ],
+)
 def test_Pattern_add(key: str, value: Any) -> None:
     pattern = fontconfig.Pattern.create()
     pattern.add(key, value)
 
 
-@pytest.mark.parametrize("key, value", [
-    ("charset", None),
-])
+@pytest.mark.parametrize(
+    "key, value",
+    [
+        ("charset", None),
+    ],
+)
 def test_Pattern_add_xfail(key: str, value: Any) -> None:
     pattern = fontconfig.Pattern.create()
     with pytest.raises(NotImplementedError):
