@@ -5,7 +5,7 @@ set -eux
 build_freetype() {
     cd third_party/freetype
     ./autogen.sh
-    ./configure --prefix=/opt/local
+    ./configure --prefix=/tmp/build
     make
     make -j
     make install
@@ -14,7 +14,7 @@ build_freetype() {
 
 build_fontconfig() {
     cd third_party/fontconfig
-    ./autogen.sh --prefix=/opt/local
+    ./autogen.sh --prefix=/tmp/build
     make -j
     make install
     cd ../..
