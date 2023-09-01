@@ -35,6 +35,8 @@ build_fontconfig() {
 
 # Install build dependencies
 if [[ "$OSTYPE" == "darwin"* ]]; then
+    export CFLAGS="$CFLAGS -arch x86_64 -arch arm64"
+    export LDFLAGS="$LDFLAGS -arch x86_64 -arch arm64"
     brew uninstall --ignore-dependencies -f fontconfig freetype
     brew install gperftools gettext automake
 elif command -v yum &> /dev/null; then
