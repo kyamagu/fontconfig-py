@@ -2,10 +2,12 @@
 
 set -ex
 
+export CFLAGS="$CFLAGS -fPIC"
+
 build_freetype() {
     cd third_party/freetype
     ./autogen.sh
-    ./configure --without-png --without-harfbuzz --without-brotli --without-librsvg
+    ./configure --disable-shared --without-png --without-harfbuzz --without-brotli --without-librsvg
     make -j
     make install
     cd ../..
@@ -13,7 +15,7 @@ build_freetype() {
 
 build_fontconfig() {
     cd third_party/fontconfig
-    ./autogen.sh --disable-libxml2 --disable-iconv --disable-nls
+    ./autogen.sh --disable-shared --disable-libxml2 --disable-iconv --disable-nls
     make -j
     make install
     cd ../..
