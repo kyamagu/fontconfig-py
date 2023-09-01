@@ -33,7 +33,7 @@ jobs:
         run: python -m cibuildwheel --output-dir dist
         env:
           CIBW_ARCHS_LINUX: x86_64
-          CIBW_ARCHS_MACOS: x86_64
+          CIBW_ARCHS_MACOS: arm64 x86_64
           CIBW_SKIP: cp36* cp37* pp* cp38-macos*
           CIBW_BEFORE_ALL: bash {project}/scripts/build_third_party.sh
           CIBW_BEFORE_BUILD: git clean -xf && rm -rf {project}/build
@@ -46,10 +46,11 @@ jobs:
             LIBTOOLIZE=glibtoolize
             DYLD_LIBRARY_PATH=/usr/local/lib:$DYLD_LIBRARY_PATH
             PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
-            LDFLAGS="-dead_strip"
+            CFLAGS=$ARCHFLAGS
+            LDFLAGS="$ARCHFLAGS -dead_strip"
           CIBW_TEST_REQUIRES: pytest
           CIBW_TEST_COMMAND: pytest {project}/tests
-          CIBW_TEST_SKIP: "*_arm64"
+          CIBW_TEST_SKIP: "*_arm64 *_aarch64"
 
       - uses: actions/upload-artifact@v3
         with:
