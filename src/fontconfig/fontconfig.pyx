@@ -211,13 +211,16 @@ cdef class Pattern:
     def add(self, key: str, value: object, append: bool = True) -> bool:
         """Add a value to a pattern"""
         cdef c_impl.FcValue fc_value
+        cdef c_impl.FcObjectType* object_type
         key_ = key.encode("utf-8")
         object_type = c_impl.FcNameGetObjectType(key_)
         if object_type is NULL or object_type.type == c_impl.FcTypeUnknown:
             raise KeyError("Invalid key %s" % key)
         fc_value.type = object_type.type
         _ObjectToFcValue(value, &fc_value)
-        return <bint>c_impl.FcPatternAdd(self._ptr, key_, fc_value, append)
+        result = <bint>c_impl.FcPatternAdd(self._ptr, key_, fc_value, append)
+        c_impl.FcValueDestroy(fc_value)
+        return result
 
     def get(self, key: str, index: int = 0) -> Any:
         """Return a value from a pattern"""
@@ -292,72 +295,98 @@ cdef class Pattern:
 
 cdef void _ObjectToFcValue(object value, c_impl.FcValue* fc_value):
     assert fc_value is not NULL
-    cdef c_impl.FcMatrix matrix
-    if fc_value[0].type == c_impl.FcTypeBool:
-        fc_value[0].u.b = <c_impl.FcBool>value
-    elif fc_value[0].type == c_impl.FcTypeDouble:
-        fc_value[0].u.d = <double>value
-    elif fc_value[0].type == c_impl.FcTypeInteger:
-        fc_value[0].u.i = <int>value
-    elif fc_value[0].type == c_impl.FcTypeString:
-        # NOTE: When Python garbage collects bytes, this pointer becomes invalid!
-        fc_value[0].u.s = <const c_impl.FcChar8*>(value)
-    elif fc_value[0].type == c_impl.FcTypeCharSet:
+    if fc_value.type == c_impl.FcTypeBool:
+        fc_value.u.b = <c_impl.FcBool>value
+    elif fc_value.type == c_impl.FcTypeDouble:
+        fc_value.u.d = <double>value
+    elif fc_value.type == c_impl.FcTypeInteger:
+        fc_value.u.i = <int>value
+    elif fc_value.type == c_impl.FcTypeString:
+        fc_value.u.s = _ObjectToFcFcStr(value)
+    elif fc_value.type == c_impl.FcTypeCharSet:
         raise NotImplementedError("CharSet is not supported yet")
-    elif fc_value[0].type == c_impl.FcTypeLangSet:
-        fc_value[0].u.l = _ObjectToFcLangSet(value)  # TODO: Possible memory leak
-    elif fc_value[0].type == c_impl.FcTypeFTFace:
+    elif fc_value.type == c_impl.FcTypeLangSet:
+        fc_value.u.l = _ObjectToFcLangSet(value)
+    elif fc_value.type == c_impl.FcTypeFTFace:
         raise NotImplementedError("FTFace is not supported yet")
-    elif fc_value[0].type == c_impl.FcTypeMatrix:
-        matrix.xx = <double>value[0]
-        matrix.xy = <double>value[1]
-        matrix.yx = <double>value[2]
-        matrix.yy = <double>value[3]
-        fc_value[0].u.m = c_impl.FcMatrixCopy(&matrix)  # TODO: Possible memory leak
-    elif fc_value[0].type == c_impl.FcTypeRange:
-        fc_value[0].u.r = c_impl.FcRangeCreateDouble(
-            <double>value[0], <double>value[1])
-    elif fc_value[0].type == c_impl.FcTypeVoid:
+    elif fc_value.type == c_impl.FcTypeMatrix:
+        fc_value.u.m = _ObjectToFcMatrix(value)
+    elif fc_value.type == c_impl.FcTypeRange:
+        fc_value.u.r = _ObjectToFcRange(value)
+    elif fc_value.type == c_impl.FcTypeVoid:
         pass
     else:
-        raise ValueError("Unsupported python object: %s" % value)
+        raise RuntimeError("Invalid value type: %d" % fc_value[0].type)
+
+
+cdef c_impl.FcChar8* _ObjectToFcFcStr(object value):
+    value = value.encode("utf-8") if isinstance(value, str) else value
+    return c_impl.FcStrCopy(<const c_impl.FcChar8*>(value))
 
 
 cdef c_impl.FcLangSet* _ObjectToFcLangSet(object value):
     cdef c_impl.FcLangSet* lang_set = c_impl.FcLangSetCreate()
+    cdef c_impl.FcBool result;
     for item in value:
-        c_impl.FcLangSetAdd(lang_set, <c_impl.FcChar8*>(item))
+        lang = item.encode("utf-8") if isinstance(item, str) else item
+        result = c_impl.FcLangSetAdd(lang_set, <c_impl.FcChar8*>(lang))
+        if not result:
+            c_impl.FcLangSetDestroy(lang_set)
+            raise ValueError("Failed to add language: %s" % item)
     return lang_set
+
+
+cdef c_impl.FcMatrix* _ObjectToFcMatrix(object value):
+    cdef c_impl.FcMatrix matrix, *result
+    matrix.xx = <double>value[0]
+    matrix.xy = <double>value[1]
+    matrix.yx = <double>value[2]
+    matrix.yy = <double>value[3]
+    result = c_impl.FcMatrixCopy(&matrix)
+    if result is NULL:
+        raise MemoryError()
+    return result
+
+
+cdef c_impl.FcRange* _ObjectToFcRange(object value):
+    cdef c_impl.FcRange* result
+    if isinstance(value[0], int) and isinstance(value[1], int):
+        result = c_impl.FcRangeCreateInteger(<int>value[0], <int>value[1])
+    else:
+        result = c_impl.FcRangeCreateDouble(<double>value[0], <double>value[1])
+    if result is NULL:
+        raise MemoryError()
+    return result
 
 
 cdef object _FcValueToObject(c_impl.FcValue* value):
     assert value is not NULL
-    if value[0].type == c_impl.FcTypeBool:
-        return <bint>value[0].u.b
-    elif value[0].type == c_impl.FcTypeDouble:
-        return value[0].u.d
-    elif value[0].type == c_impl.FcTypeInteger:
-        return value[0].u.i
-    elif value[0].type == c_impl.FcTypeString:
-        py_bytes = <bytes>(value[0].u.s)
+    if value.type == c_impl.FcTypeBool:
+        return <bint>value.u.b
+    elif value.type == c_impl.FcTypeDouble:
+        return value.u.d
+    elif value.type == c_impl.FcTypeInteger:
+        return value.u.i
+    elif value.type == c_impl.FcTypeString:
+        py_bytes = <bytes>(value.u.s)
         return py_bytes.decode("utf-8")
-    elif value[0].type == c_impl.FcTypeCharSet:
+    elif value.type == c_impl.FcTypeCharSet:
         logger.warning("CharSet is not supported yet")
         return None
-    elif value[0].type == c_impl.FcTypeLangSet:
-        return _FcLangSetToObject(value[0].u.l)
-    elif value[0].type == c_impl.FcTypeFTFace:
+    elif value.type == c_impl.FcTypeLangSet:
+        return _FcLangSetToObject(value.u.l)
+    elif value.type == c_impl.FcTypeFTFace:
         logger.warning("FTFace is not supported yet")
         return None
-    elif value[0].type == c_impl.FcTypeMatrix:
+    elif value.type == c_impl.FcTypeMatrix:
         return (
-            <float>value[0].u.m[0].xx, <float>value[0].u.m[0].xy
-            <float>value[0].u.m[0].yx, <float>value[0].u.m[0].yy
+            <float>value.u.m.xx, <float>value.u.m.xy
+            <float>value.u.m.yx, <float>value.u.m.yy
         )
-    elif value[0].type == c_impl.FcTypeRange:
-        return _FcRangeToObject(value[0].u.r)
-    elif value[0].type == c_impl.FcTypeVoid:
-        return <intptr_t>(value[0].u.f)
+    elif value.type == c_impl.FcTypeRange:
+        return _FcRangeToObject(value.u.r)
+    elif value.type == c_impl.FcTypeVoid:
+        return <intptr_t>(value.u.f)
     return None
 
 
@@ -375,7 +404,7 @@ cdef object _FcLangSetToObject(const c_impl.FcLangSet* lang_set):
         value = c_impl.FcStrListNext(str_list)
         if value is NULL:
             break
-        langs.append(<bytes>(value))
+        langs.append(<bytes>(value).decode("utf-8"))
     c_impl.FcStrListDone(str_list)
     c_impl.FcStrSetDestroy(str_set)
     return langs
@@ -460,8 +489,8 @@ cdef class FontSet:
         c_impl.FcFontSetPrint(self._ptr)
 
     def __iter__(self) -> Iterator[Pattern]:
-        for i in range(self._ptr[0].nfont):
-            yield Pattern(<intptr_t>(self._ptr[0].fonts[i]), owner=False)
+        for i in range(self._ptr.nfont):
+            yield Pattern(<intptr_t>(self._ptr.fonts[i]), owner=False)
 
     @classmethod
     def query(cls, pattern: Pattern, object_set: ObjectSet) -> FontSet:
