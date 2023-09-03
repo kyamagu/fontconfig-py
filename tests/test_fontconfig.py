@@ -87,11 +87,11 @@ def test_Pattern_subset(pattern: fontconfig.Pattern) -> None:
 @pytest.mark.parametrize(
     "key, value",
     [
-        ("family", b"Arial"),
+        ("family", "Arial"),
         ("slant", 80),
         ("aspect", 1.0),
         ("antialias", True),
-        ("lang", [b"en"]),
+        ("lang", ["en"]),
         ("size", (10.0, 10.0)),
     ],
 )
