@@ -41,6 +41,88 @@ def test_Config_set_current(config) -> None:
     assert isinstance(config.set_current(), bool)
 
 
+def test_Config_home() -> None:
+    assert isinstance(fontconfig.Config.home(), (str, type(None)))
+
+
+def test_Config_enable_home() -> None:
+    assert isinstance(fontconfig.Config.enable_home(False), bool)
+
+
+def test_Config_build_fonts(config) -> None:
+    assert isinstance(config.build_fonts(), bool)
+
+
+def test_Config_get_config_dirs(config) -> None:
+    results = config.get_config_dirs()
+    assert isinstance(results, list)
+    assert all(isinstance(x, str) for x in results)
+
+
+def test_Config_get_font_dirs(config) -> None:
+    results = config.get_font_dirs()
+    assert isinstance(results, list)
+    assert all(isinstance(x, str) for x in results)
+
+
+def test_Config_get_config_files(config) -> None:
+    results = config.get_config_files()
+    assert isinstance(results, list)
+    assert all(isinstance(x, str) for x in results)
+
+
+def test_Config_get_cache_dirs(config) -> None:
+    results = config.get_cache_dirs()
+    assert isinstance(results, list)
+    assert all(isinstance(x, str) for x in results)
+
+
+@pytest.mark.parametrize("name", ["system", "application"])
+def test_Config_get_fonts(config, name) -> None:
+    result = config.get_fonts(name)
+    assert isinstance(result, fontconfig.FontSet)
+
+
+def test_Config_get_rescan_interval(config) -> None:
+    assert isinstance(config.get_rescan_interval(), int)
+
+
+def test_Config_set_rescan_interval(config) -> None:
+    assert isinstance(config.set_rescan_interval(0), bool)
+
+
+@pytest.mark.skip(reason="no good fixture")
+def test_Config_app_font_add_file(config) -> None:
+    config.app_font_add_file("/tmp/foo.ttf")
+
+
+@pytest.mark.skip(reason="no good fixture")
+def test_Config_app_font_add_dir(config) -> None:
+    config.app_font_add_dir("/tmp")
+
+
+def test_Config_app_font_add_clear(config) -> None:
+    config.app_font_clear()
+
+
+@pytest.mark.skip(reason="need a good fixture to feed")
+def test_Config_substitute_with_pat(config) -> None:
+    config.substitute_with_pat()
+
+
+@pytest.mark.skip(reason="need a good fixture to feed")
+def test_Config_substitute(config) -> None:
+    config.substitute()
+
+
+def test_Config_font_match(config, pattern):
+    assert isinstance(config.match(pattern), fontconfig.Pattern)
+
+
+def test_Config_font_sort(config, pattern):
+    assert isinstance(config.sort(pattern, trim=True), fontconfig.FontSet)
+
+
 @pytest.fixture(scope="module")
 def pattern() -> fontconfig.Pattern:
     yield fontconfig.Pattern.parse(":lang=en")

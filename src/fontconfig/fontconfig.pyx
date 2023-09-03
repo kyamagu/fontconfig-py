@@ -100,6 +100,146 @@ cdef class Config:
         """Check timestamps on config files"""
         return <bint>c_impl.FcConfigUptoDate(self._ptr)
 
+    @staticmethod
+    def home() -> Optional[str]:
+        """Return the current home directory"""
+        cdef c_impl.FcChar8* result = c_impl.FcConfigHome()
+        if result is NULL:
+            return None
+        return <bytes>(result).decode("utf-8")
+
+    @staticmethod
+    def enable_home(enable: bool) -> bool:
+        """Controls use of the home directory"""
+        return <bint>c_impl.FcConfigEnableHome(<c_impl.FcBool>(enable))
+
+    def build_fonts(self) -> bool:
+        """Build font database"""
+        return <bint>c_impl.FcConfigBuildFonts(self._ptr)
+
+    def get_config_dirs(self) -> List[str]:
+        """Get config directories"""
+        cdef c_impl.FcStrList* str_list = c_impl.FcConfigGetConfigDirs(self._ptr)
+        results = _FcStrListToObject(str_list)
+        c_impl.FcStrListDone(str_list)
+        return results
+
+    def get_font_dirs(self) -> List[str]:
+        """Get font directories"""
+        cdef c_impl.FcStrList* str_list = c_impl.FcConfigGetFontDirs(self._ptr)
+        results = _FcStrListToObject(str_list)
+        c_impl.FcStrListDone(str_list)
+        return results
+
+    def get_config_files(self) -> List[str]:
+        """Get config files"""
+        cdef c_impl.FcStrList* str_list = c_impl.FcConfigGetConfigFiles(self._ptr)
+        results = _FcStrListToObject(str_list)
+        c_impl.FcStrListDone(str_list)
+        return results
+
+    def get_cache_dirs(self) -> List[str]:
+        """Return the list of directories searched for cache files"""
+        cdef c_impl.FcStrList* str_list = c_impl.FcConfigGetCacheDirs(self._ptr)
+        results = _FcStrListToObject(str_list)
+        c_impl.FcStrListDone(str_list)
+        return results
+
+    def get_fonts(self, name: str = "system") -> FontSet:
+        """Get config font set"""
+        cdef c_impl.FcConfig* ptr
+        cdef c_impl.FcFontSet* fonts
+        cdef c_impl.FcSetName set_name
+
+        names = {
+            "system": c_impl.FcSetName.FcSetSystem,
+            "application": c_impl.FcSetName.FcSetApplication,
+        }
+        if name not in names:
+            raise KeyError("Invalid name: %s; must be system or application" % name)
+        set_name = names[name]
+
+        ptr = c_impl.FcConfigReference(self._ptr)
+        fonts = c_impl.FcConfigGetFonts(ptr, set_name)
+        c_impl.FcConfigDestroy(ptr)
+        return FontSet(<intptr_t>fonts, owner=False)
+
+    def get_rescan_interval(self) -> int:
+        """Get config rescan interval"""
+        return c_impl.FcConfigGetRescanInterval(self._ptr)
+
+    def set_rescan_interval(self, interval: int) -> bool:
+        """Set config rescan interval"""
+        return <bint>c_impl.FcConfigSetRescanInterval(self._ptr, interval)
+
+    def app_font_add_file(self, filename: str) -> bool:
+        """Add font file to font database"""
+        file_ = filename.encode("utf-8")
+        return <bint>c_impl.FcConfigAppFontAddFile(
+            self._ptr, <const c_impl.FcChar8*>(file_))
+
+    def app_font_add_dir(self, dirname: str) -> bool:
+        """Add fonts from directory to font database"""
+        dir_ = dirname.encode("utf-8")
+        return <bint>c_impl.FcConfigAppFontAddDir(
+            self._ptr, <const c_impl.FcChar8*>(dir_))
+
+    def app_font_clear(self) -> None:
+        """Remove all app fonts from font database"""
+        c_impl.FcConfigAppFontClear(self._ptr)
+
+    def substitute_with_pat(
+        self, p: Pattern, p_pat: Pattern, kind: str = "pattern") -> bool:
+        """Execute substitutions"""
+        cdef c_impl.FcMatchKind kind_
+
+        kinds = {
+            "pattern": c_impl.FcMatchPattern,
+            "font": c_impl.FcMatchFont,
+        }
+        if kind not in kinds:
+            raise KeyError("Invalid kind: %s" % kind)
+        kind_ = kinds[kind]
+        return c_impl.FcConfigSubstituteWithPat(self._ptr, p._ptr, p_pat._ptr, kind_)
+
+    def substitute(self, p: Pattern, kind: str = "pattern") -> bool:
+        """Execute substitutions"""
+        cdef c_impl.FcMatchKind kind_
+
+        kinds = {
+            "pattern": c_impl.FcMatchPattern,
+            "font": c_impl.FcMatchFont,
+        }
+        if kind not in kinds:
+            raise KeyError("Invalid kind: %s" % kind)
+        kind_ = kinds[kind]
+        return c_impl.FcConfigSubstitute(self._ptr, p._ptr, kind_)
+
+    def match(self, p: Pattern) -> Pattern:
+        """Return best font"""
+        cdef c_impl.FcResult result
+        cdef c_impl.FcPattern* ptr = c_impl.FcFontMatch(self._ptr, p._ptr, &result)
+        if result == c_impl.FcResultMatch:
+            return Pattern(<intptr_t>ptr)
+        elif result == c_impl.FcResultOutOfMemory:
+            raise MemoryError()
+        else:
+            raise RuntimeError("Match result is %d" % result)
+
+    def sort(self, p: Pattern, trim: bool) -> FontSet:
+        """Return list of matching fonts"""
+        cdef c_impl.FcResult result
+        cdef c_impl.FcCharSet* csp = NULL
+        cdef c_impl.FcFontSet* ptr = c_impl.FcFontSort(
+            self._ptr, p._ptr, <c_impl.FcBool>trim, &csp, &result)
+        # TODO: Return csp
+        if result == c_impl.FcResultMatch:
+            return FontSet(<intptr_t>ptr)
+        elif result == c_impl.FcResultOutOfMemory:
+            raise MemoryError()
+        else:
+            raise RuntimeError("Sort result is %d" % result)
+
     # TODO: Implement me!
 
 
@@ -398,13 +538,7 @@ cdef object _FcLangSetToObject(const c_impl.FcLangSet* lang_set):
     str_set = c_impl.FcLangSetGetLangs(lang_set)
     assert str_set is not NULL
     str_list = c_impl.FcStrListCreate(str_set)
-    assert str_list is not NULL
-    langs = []
-    while True:
-        value = c_impl.FcStrListNext(str_list)
-        if value is NULL:
-            break
-        langs.append(<bytes>(value).decode("utf-8"))
+    langs = _FcStrListToObject(str_list)
     c_impl.FcStrListDone(str_list)
     c_impl.FcStrSetDestroy(str_set)
     return langs
@@ -415,6 +549,17 @@ cdef object _FcRangeToObject(const c_impl.FcRange* range):
     if not c_impl.FcRangeGetDouble(range, &begin, &end):
         raise RuntimeError()
     return (<float>begin, <float>end)
+
+
+cdef object _FcStrListToObject(const c_impl.FcStrList* str_list):
+    assert str_list is not NULL
+    langs = []
+    while True:
+        value = c_impl.FcStrListNext(str_list)
+        if value is NULL:
+            break
+        langs.append(<bytes>(value).decode("utf-8"))
+    return langs
 
 
 cdef class ObjectSet:
@@ -461,12 +606,14 @@ cdef class FontSet:
     the results of listing available fonts.
     """
     cdef c_impl.FcFontSet* _ptr
+    cdef bint _owner
 
-    def __cinit__(self, ptr: int):
+    def __cinit__(self, ptr: int, owner: bool = True):
         self._ptr = <c_impl.FcFontSet*>(<intptr_t>ptr)
+        self._owner = owner
 
     def __dealloc__(self):
-        if self._ptr is not NULL:
+        if self._owner and self._ptr is not NULL:
             c_impl.FcFontSetDestroy(self._ptr)
 
     cdef intptr_t ptr(self):
