@@ -82,12 +82,14 @@ cdef class Config:
         fonts = config.font_list(pattern, object_set)
     """
     cdef c_impl.FcConfig* _ptr
+    cdef bint _owner
 
-    def __cinit__(self, ptr: int = 0):
+    def __cinit__(self, ptr: int, owner: bool = True):
         self._ptr = <c_impl.FcConfig*>(<intptr_t>(ptr))
+        self._owner = owner
 
     def __dealloc__(self):
-        if self._ptr is not NULL:
+        if self._ptr is not NULL and self._owner:
             c_impl.FcConfigDestroy(self._ptr)
 
     cdef intptr_t ptr(self):
@@ -108,7 +110,7 @@ cdef class Config:
     @classmethod
     def get_current(cls) -> Config:
         """Return current configuration"""
-        return cls(<intptr_t>c_impl.FcConfigReference(NULL))
+        return cls(<intptr_t>c_impl.FcConfigGetCurrent(), False)
 
     def upto_date(self) -> bool:
         """Check timestamps on config files"""
