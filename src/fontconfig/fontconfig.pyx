@@ -516,6 +516,9 @@ cdef class Pattern:
         free(result)
         return py_str
 
+    def __repr__(self) -> str:
+        return dict(self).__repr__()
+
 
 cdef void _ObjectToFcValue(object value, c_impl.FcValue* fc_value):
     assert fc_value is not NULL
@@ -676,13 +679,36 @@ cdef class ObjectSet:
 
     def add(self, value: str) -> bool:
         """Add to an object set"""
-        return c_impl.FcObjectSetAdd(self._ptr, value.encode("utf-8"))
+        cdef bytes value_ = value.encode("utf-8")
+        cdef c_impl.FcObjectType* object_type = c_impl.FcNameGetObjectType(value_)
+        if object_type is NULL:
+            raise KeyError("Invalid value: %s" % value)
+        elif object_type.type == c_impl.FcTypeUnknown:
+            raise KeyError("Unknown value: %s" % value)
+        return <bint>c_impl.FcObjectSetAdd(self._ptr, value_)
 
     def build(self, values: Iterable[str]) -> None:
         """Build object set from iterable"""
         for value in values:
             if not self.add(value):
                 raise MemoryError()
+
+    def __iter__(self) -> Iterator[str]:
+        for i in range(self._ptr.nobject):
+            yield <bytes>(self._ptr.objects[i]).decode("utf-8")
+
+    def __repr__(self) -> str:
+        return list(self).__repr__()
+
+    def __len__(self) -> int:
+        return self._ptr.nobject
+
+    def __getitem__(self, index: int) -> str:
+        if index >= self._ptr.nobject or index <= -self._ptr.nobject:
+            raise IndexError("Invalid index: %d" % index)
+        if index < 0:
+            index += self._ptr.nobject
+        return <bytes>(self._ptr.objects[index]).decode("utf-8")
 
 
 cdef class FontSet:
@@ -722,6 +748,19 @@ cdef class FontSet:
     def __iter__(self) -> Iterator[Pattern]:
         for i in range(self._ptr.nfont):
             yield Pattern(<intptr_t>(self._ptr.fonts[i]), owner=False)
+
+    def __repr__(self) -> str:
+        return list(self).__repr__()
+
+    def __len__(self) -> int:
+        return self._ptr.nfont
+
+    def __getitem__(self, index: int) -> Pattern:
+        if index >= self._ptr.nfont or index <= -self._ptr.nfont:
+            raise IndexError("Invalid index: %d" % index)
+        if index < 0:
+            index += self._ptr.nfont
+        return Pattern(<intptr_t>self._ptr.fonts[index], owner=False)
 
 
 def query(where: str = "", select: Iterable[str] = ("family",)) -> List[Dict[str, Any]]:
