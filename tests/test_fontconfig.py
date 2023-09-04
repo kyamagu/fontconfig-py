@@ -247,10 +247,6 @@ def test_Pattern_remove() -> None:
     assert isinstance(pattern.remove("aspect", 0), bool)
 
 
-def test_Pattern_iter(pattern: fontconfig.Pattern) -> None:
-    dict(pattern)
-
-
 def test_Pattern_unparse(pattern: fontconfig.Pattern) -> None:
     assert isinstance(pattern.unparse(), str)
 
@@ -263,11 +259,38 @@ def test_Pattern_default_format(pattern: fontconfig.Pattern) -> None:
     assert isinstance(pattern.format("%{lang}"), str)
 
 
+def test_Pattern_iter(pattern: fontconfig.Pattern) -> None:
+    dict(pattern)
+
+
+def test_Pattern_repr(pattern) -> None:
+    repr(pattern)
+
+
 @pytest.fixture
 def object_set():
     object_set = fontconfig.ObjectSet.create()
     object_set.build(["family", "style", "slant", "weight", "size", "aspect", "lang"])
     yield object_set
+
+
+def test_ObjectSet_add(object_set) -> None:
+    assert isinstance(object_set.add("familylang"), bool)
+
+
+def test_ObjectSet_iter(object_set) -> None:
+    for item in object_set:
+        assert isinstance(item, str)
+
+
+def test_ObjectSet_getitem(object_set) -> None:
+    for i in range(len(object_set)):
+        assert isinstance(object_set[i], str)
+    assert isinstance(object_set[-1], str)
+
+
+def test_ObjectSet_repr(object_set) -> None:
+    repr(object_set)
 
 
 def test_query() -> None:
