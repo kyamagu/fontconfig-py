@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "fontconfig-py"
-version = "0.1.1"
+version = "0.1.2"
 description = "Python bindings to fontconfig"
 authors = ["Kota Yamaguchi <yamaguchi_kota@cyberagent.co.jp>"]
 license = "MIT"
