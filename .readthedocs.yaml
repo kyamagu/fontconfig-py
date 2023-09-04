@@ -9,7 +9,7 @@ build:
       - pip install poetry
       - poetry config virtualenvs.create false
     post_install:
-      - apt-get -yq remove libfontconfig-dev
+      - sudo apt-get -yq remove libfontconfig-dev
       - bash scripts/build_third_party.sh
       - poetry install --with docs
 
