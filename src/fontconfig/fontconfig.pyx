@@ -68,11 +68,18 @@ cdef class Config:
 
     Example::
 
+        # List config content
         config = fontconfig.Config.get_current()
         for name, desc, enabled in config:
             if enabled:
                 print(name)
                 print(desc)
+
+        # Query fonts from the current config
+        pattern = fontconfig.Pattern.parse(":lang=en")
+        object_set = fontconfig.ObjectSet.create()
+        object_set.add("family")
+        fonts = config.font_list(pattern, object_set)
     """
     cdef c_impl.FcConfig* _ptr
 
@@ -320,8 +327,6 @@ cdef class Config:
                 )
                 c_impl.FcStrFree(name)
                 c_impl.FcStrFree(desc)
-            else:
-                logger.warning("Invalid iterator")
             if not <bint>c_impl.FcConfigFileInfoIterNext(ptr, &iter):
                 break
         c_impl.FcConfigDestroy(ptr)
@@ -654,6 +659,16 @@ cdef class ObjectSet:
 
     It is used to indicate which properties are to be returned in the patterns
     from FontList.
+
+    Example::
+
+        # Create a new ObjectSet
+        object_set = fontconfig.ObjectSet.create()
+        object_set.build(["family", "familylang", "style", "stylelang"])
+
+        # Inspect elements
+        for name in object_set:
+            print(name)
     """
     cdef c_impl.FcObjectSet* _ptr
     cdef bint _owner
@@ -714,6 +729,14 @@ cdef class ObjectSet:
 cdef class FontSet:
     """A FontSet simply holds a list of patterns; these are used to return
     the results of listing available fonts.
+
+    Example::
+
+        fonts = config.font_list(pattern, object_set)
+
+        # Inspect elements
+        for pattern in fonts:
+            print(pattern)
     """
     cdef c_impl.FcFontSet* _ptr
     cdef bint _owner
