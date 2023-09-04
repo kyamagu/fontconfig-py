@@ -223,18 +223,20 @@ cdef class Config:
         kind_ = kinds[kind]
         return c_impl.FcConfigSubstitute(self._ptr, p._ptr, kind_)
 
-    def font_match(self, p: Pattern) -> Pattern:
+    def font_match(self, p: Pattern) -> Optional[Pattern]:
         """Return best font"""
         cdef c_impl.FcResult result
         cdef c_impl.FcPattern* ptr = c_impl.FcFontMatch(self._ptr, p._ptr, &result)
         if result == c_impl.FcResultMatch:
             return Pattern(<intptr_t>ptr)
+        elif result == c_impl.FcResultNoMatch:
+            return None
         elif result == c_impl.FcResultOutOfMemory:
             raise MemoryError()
         else:
             raise RuntimeError("Match result is %d" % result)
 
-    def font_sort(self, p: Pattern, trim: bool) -> FontSet:
+    def font_sort(self, p: Pattern, trim: bool) -> Optional[FontSet]:
         """Return list of matching fonts"""
         cdef c_impl.FcResult result
         cdef c_impl.FcCharSet* csp = NULL
@@ -243,6 +245,8 @@ cdef class Config:
         # TODO: Return csp
         if result == c_impl.FcResultMatch:
             return FontSet(<intptr_t>ptr)
+        elif result == c_impl.FcResultNoMatch:
+            return None
         elif result == c_impl.FcResultOutOfMemory:
             raise MemoryError()
         else:

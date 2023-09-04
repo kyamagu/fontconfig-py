@@ -116,11 +116,12 @@ def test_Config_substitute(config) -> None:
 
 
 def test_Config_font_match(config, pattern) -> None:
-    assert isinstance(config.font_match(pattern), fontconfig.Pattern)
+    assert isinstance(config.font_match(pattern), (fontconfig.Pattern, type(None)))
 
 
 def test_Config_font_sort(config, pattern) -> None:
-    assert isinstance(config.font_sort(pattern, trim=True), fontconfig.FontSet)
+    assert isinstance(
+        config.font_sort(pattern, trim=True), (fontconfig.FontSet, type(None)))
 
 
 def test_Config_font_render_prepare(config, pattern) -> None:
