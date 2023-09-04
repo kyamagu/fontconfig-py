@@ -4,13 +4,13 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3.11"
-  apt_packages:
-    - libfontconfig-dev
   jobs:
     post_create_environment:
       - pip install poetry
       - poetry config virtualenvs.create false
     post_install:
+      - apt-get -yq remove libfontconfig-dev
+      - bash scripts/build_third_party.sh
       - poetry install --with docs
 
 sphinx:
