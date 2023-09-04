@@ -266,6 +266,7 @@ cdef class Config:
             raise MemoryError()
         return FontSet(<intptr_t>ptr)
 
+    '''
     def get_filename(self, name: str = "") -> str:
         """Find a config file"""
         cdef bytes filename
@@ -273,6 +274,7 @@ cdef class Config:
         filename = <bytes>c_impl.FcConfigGetFilename(
             self._ptr, <const c_impl.FcChar8*>name_)
         return filename.decode("utf-8")
+    '''
 
     def parse_and_load(self, filename: str, complain: bool = True) -> bool:
         """Load a configuration file"""
