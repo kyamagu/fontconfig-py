@@ -2,7 +2,6 @@ import atexit
 import logging
 from typing import Any, Dict, Iterable, Iterator, List, Tuple
 
-from cython.cimports.libc.stdlib import free
 cimport fontconfig._fontconfig as c_impl
 
 
@@ -513,7 +512,7 @@ cdef class Pattern:
         if result is NULL:
             raise ValueError("Invalid format: %s" % fmt)
         py_str = <bytes>(result).decode("utf-8")
-        free(result)
+        c_impl.FcStrFree(result)
         return py_str
 
     def __repr__(self) -> str:
