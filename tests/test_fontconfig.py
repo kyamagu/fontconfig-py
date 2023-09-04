@@ -135,6 +135,7 @@ def test_Config_font_list(config, pattern, object_set) -> None:
     assert isinstance(fonts, fontconfig.FontSet)
 
 
+@pytest.mark.skip(reason="version compatibility issue")
 def test_Config_get_filename(config) -> None:
     assert isinstance(config.get_filename(), str)
 
