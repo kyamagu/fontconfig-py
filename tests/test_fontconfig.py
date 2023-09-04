@@ -115,12 +115,48 @@ def test_Config_substitute(config) -> None:
     config.substitute()
 
 
-def test_Config_font_match(config, pattern):
-    assert isinstance(config.match(pattern), fontconfig.Pattern)
+def test_Config_font_match(config, pattern) -> None:
+    assert isinstance(config.font_match(pattern), fontconfig.Pattern)
 
 
-def test_Config_font_sort(config, pattern):
-    assert isinstance(config.sort(pattern, trim=True), fontconfig.FontSet)
+def test_Config_font_sort(config, pattern) -> None:
+    assert isinstance(config.font_sort(pattern, trim=True), fontconfig.FontSet)
+
+
+def test_Config_font_render_prepare(config, pattern) -> None:
+    font = fontconfig.Pattern.parse(":family=Arial")
+    prepared = config.font_render_prepare(pattern, font)
+    assert isinstance(prepared, fontconfig.Pattern)
+
+
+def test_Config_font_list(config, pattern, object_set) -> None:
+    fonts = config.font_list(pattern, object_set)
+    assert isinstance(fonts, fontconfig.FontSet)
+
+
+def test_Config_get_filename(config) -> None:
+    assert isinstance(config.get_filename(), str)
+
+
+def test_Config_parse_and_load(config) -> None:
+    assert isinstance(config.parse_and_load("", complain=False), bool)
+
+
+def test_Config_parse_and_load_from_memory(config) -> None:
+    assert isinstance(config.parse_and_load_from_memory(b"", complain=False), bool)
+
+
+def test_Config_get_sysroot(config) -> None:
+    sysroot = config.get_sysroot()
+    assert isinstance(sysroot, (str, type(None)))
+    # TODO: set_sysroot is not testable
+
+
+def test_Config_iter(config) -> None:
+    for name, desc, enabled in config:
+        assert isinstance(name, str)
+        assert isinstance(desc, str)
+        assert isinstance(enabled, bool)
 
 
 @pytest.fixture(scope="module")

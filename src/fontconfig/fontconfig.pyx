@@ -66,6 +66,14 @@ cdef class Config:
 
     There is a default configuration which applications may use by passing 0 to
     any function using the data within a Config.
+
+    Example::
+
+        config = fontconfig.Config.get_current()
+        for name, desc, enabled in config:
+            if enabled:
+                print(name)
+                print(desc)
     """
     cdef c_impl.FcConfig* _ptr
 
@@ -215,7 +223,7 @@ cdef class Config:
         kind_ = kinds[kind]
         return c_impl.FcConfigSubstitute(self._ptr, p._ptr, kind_)
 
-    def match(self, p: Pattern) -> Pattern:
+    def font_match(self, p: Pattern) -> Pattern:
         """Return best font"""
         cdef c_impl.FcResult result
         cdef c_impl.FcPattern* ptr = c_impl.FcFontMatch(self._ptr, p._ptr, &result)
@@ -226,7 +234,7 @@ cdef class Config:
         else:
             raise RuntimeError("Match result is %d" % result)
 
-    def sort(self, p: Pattern, trim: bool) -> FontSet:
+    def font_sort(self, p: Pattern, trim: bool) -> FontSet:
         """Return list of matching fonts"""
         cdef c_impl.FcResult result
         cdef c_impl.FcCharSet* csp = NULL
@@ -240,7 +248,79 @@ cdef class Config:
         else:
             raise RuntimeError("Sort result is %d" % result)
 
-    # TODO: Implement me!
+    def font_render_prepare(self, p: Pattern, font: Pattern) -> Pattern:
+        """Prepare pattern for loading font file"""
+        cdef c_impl.FcPattern* ptr = c_impl.FcFontRenderPrepare(
+            self._ptr, p._ptr, font._ptr)
+        if ptr is NULL:
+            raise MemoryError()
+        return Pattern(<intptr_t>ptr)
+
+    def font_list(self, pattern: Pattern, object_set: ObjectSet) -> FontSet:
+        """List fonts"""
+        cdef c_impl.FcFontSet* ptr = c_impl.FcFontList(
+            self._ptr, pattern._ptr, object_set._ptr)
+        if ptr is NULL:
+            raise MemoryError()
+        return FontSet(<intptr_t>ptr)
+
+    def get_filename(self, name: str = "") -> str:
+        """Find a config file"""
+        cdef bytes filename
+        name_ = name.encode("utf-8")
+        filename = <bytes>c_impl.FcConfigGetFilename(
+            self._ptr, <const c_impl.FcChar8*>name_)
+        return filename.decode("utf-8")
+
+    def parse_and_load(self, filename: str, complain: bool = True) -> bool:
+        """Load a configuration file"""
+        cdef bytes filename_ = filename.encode("utf-8")
+        return <bint>c_impl.FcConfigParseAndLoad(
+            self._ptr, <c_impl.FcChar8*>filename_, <c_impl.FcBool>complain)
+
+    def parse_and_load_from_memory(self, buffer: bytes, complain: bool = True) -> bool:
+        """Load a configuration from memory"""
+        return <bint>c_impl.FcConfigParseAndLoad(
+            self._ptr, <c_impl.FcChar8*>buffer, <c_impl.FcBool>complain)
+
+    def get_sysroot(self) -> Optional[str]:
+        """Obtain the system root directory"""
+        cdef const c_impl.FcChar8* sysroot
+        ptr = c_impl.FcConfigReference(self._ptr)
+        sysroot = c_impl.FcConfigGetSysRoot(self._ptr)
+        if sysroot is NULL:
+            filename = None
+        else:
+            filename = <bytes>(sysroot).decode("utf-8")
+        c_impl.FcConfigDestroy(ptr)
+        return filename
+
+    def set_sysroot(self, sysroot: str) -> None:
+        """Set the system root directory"""
+        sysroot_ = sysroot.encode("utf-8")
+        c_impl.FcConfigSetSysRoot(self._ptr, <c_impl.FcChar8*>sysroot_)
+
+    def __iter__(self) -> Iterator[Tuple[str, str, bool]]:
+        """Obtain the configuration file information"""
+        cdef c_impl.FcConfigFileInfoIter iter
+        cdef c_impl.FcChar8 *name, *desc
+        cdef c_impl.FcBool enabled
+        cdef c_impl.FcConfig* ptr = c_impl.FcConfigReference(self._ptr)
+        c_impl.FcConfigFileInfoIter(ptr, &iter)
+        while True:
+            if <bint>c_impl.FcConfigFileInfoIterGet(ptr, &iter, &name, &desc, &enabled):
+                yield (
+                    <bytes>name.decode("utf-8"),
+                    <bytes>desc.decode("utf-8"),
+                    <bint>enabled,
+                )
+                c_impl.FcStrFree(name)
+                c_impl.FcStrFree(desc)
+            else:
+                logger.warning("Invalid iterator")
+            if not <bint>c_impl.FcConfigFileInfoIterNext(ptr, &iter):
+                break
+        c_impl.FcConfigDestroy(ptr)
 
 
 cdef class CharSet:
@@ -639,12 +719,6 @@ cdef class FontSet:
         for i in range(self._ptr.nfont):
             yield Pattern(<intptr_t>(self._ptr.fonts[i]), owner=False)
 
-    @classmethod
-    def query(cls, pattern: Pattern, object_set: ObjectSet) -> FontSet:
-        """Query FontSet from the specified Pattern and ObjectSet."""
-        ptr = c_impl.FcFontList(NULL, pattern._ptr, object_set._ptr)
-        return cls(<intptr_t>ptr)
-
 
 def query(where: str = "", select: Iterable[str] = ("family",)) -> List[Dict[str, Any]]:
     """
@@ -718,10 +792,11 @@ def query(where: str = "", select: Iterable[str] = ("family",)) -> List[Dict[str
     order           Int      Order number of the font
     ==============  =======  =======================================================
     """
+    config = Config.get_current()
     pattern = Pattern.parse(where)
     object_set = ObjectSet.create()
     object_set.build(select)
-    font_set = FontSet.query(pattern, object_set)
+    font_set = config.font_list(pattern, object_set)
     return [dict(p) for p in font_set]
 
 
