@@ -238,10 +238,9 @@ cdef class Config:
     def font_sort(self, p: Pattern, trim: bool) -> Optional[FontSet]:
         """Return list of matching fonts"""
         cdef c_impl.FcResult result
-        cdef c_impl.FcCharSet* csp = NULL
         cdef c_impl.FcFontSet* ptr = c_impl.FcFontSort(
-            self._ptr, p._ptr, <c_impl.FcBool>trim, &csp, &result)
-        # TODO: Return csp
+            self._ptr, p._ptr, <c_impl.FcBool>trim, NULL, &result)
+        # TODO: Support csp
         if result == c_impl.FcResultMatch:
             return FontSet(<intptr_t>ptr)
         elif result == c_impl.FcResultNoMatch:
