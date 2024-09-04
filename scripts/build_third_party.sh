@@ -39,6 +39,14 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     export LDFLAGS="$LDFLAGS -arch x86_64 -arch arm64"
     brew uninstall --ignore-dependencies -f fontconfig freetype
     brew install gperftools gettext automake libtool
+
+    # Fix directory structure for macOS runners.
+    sudo mkdir -p /usr/local/include && \
+        sudo chown -R $(whoami) /usr/local/include
+    sudo mkdir -p /usr/local/lib && \
+        sudo chown -R $(whoami) /usr/local/lib
+    sudo mkdir -p /usr/local/share && \
+        sudo chown -R $(whoami) /usr/local/share
 elif command -v yum &> /dev/null; then
     yum --disablerepo=epel install -y gperf gettext-devel libuuid-devel
 elif command -v apk &> /dev/null; then
