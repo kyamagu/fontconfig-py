@@ -20,21 +20,21 @@ jobs:
         os: [ubuntu-latest, macOS-latest]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: true
 
       - uses: actions/setup-python@v3
 
       - name: Install cibuildwheel
-        run: python -m pip install cibuildwheel==2.15.0
+        run: python -m pip install cibuildwheel==2.20.0
 
       - name: Build wheels
         run: python -m cibuildwheel --output-dir dist
         env:
           CIBW_ARCHS_LINUX: x86_64
           CIBW_ARCHS_MACOS: universal2
-          CIBW_SKIP: cp36* cp37* pp* cp38-macos*
+          CIBW_SKIP: pp* cp36-* cp38-macos*
           CIBW_BEFORE_ALL: bash {project}/scripts/build_third_party.sh
           CIBW_BEFORE_BUILD: git clean -xf && rm -rf {project}/build
           CIBW_ENVIRONMENT_LINUX: >
@@ -48,16 +48,17 @@ jobs:
             PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
             LDFLAGS="-dead_strip"
           CIBW_REPAIR_WHEEL_COMMAND_MACOS: >
-            wheel tags --platform-tag macosx_12_0_universal2 {wheel} &&
+            python -m pip install wheel &&
+            python -m wheel tags --platform-tag macosx_14_0_universal2 {wheel} &&
             rm -f {wheel} &&
             delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v $(dirname {wheel})/*.whl
           CIBW_TEST_REQUIRES: pytest
           CIBW_TEST_COMMAND: pytest {project}/tests
-          CIBW_TEST_SKIP: "*-macosx_universal2:arm64"
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           path: ./dist/*.whl
+          name: wheels-${{ runner.os }}
 
   pypi-publish:
     name: Upload release to PyPI
@@ -70,9 +71,9 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
-          name: artifact
           path: dist
+          merge-multiple: true
 
       - uses: pypa/gh-action-pypi-publish@release/v1
