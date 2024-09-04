@@ -47,6 +47,8 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
         sudo chown -R $(whoami) /usr/local/lib
     sudo mkdir -p /usr/local/share && \
         sudo chown -R $(whoami) /usr/local/share
+    sudo mkdir -p /usr/local/etc && \
+        sudo chown -R $(whoami) /usr/local/etc
 elif command -v yum &> /dev/null; then
     yum --disablerepo=epel install -y gperf gettext-devel libuuid-devel
 elif command -v apk &> /dev/null; then
