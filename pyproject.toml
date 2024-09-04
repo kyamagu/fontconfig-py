@@ -16,7 +16,7 @@ script = "build.py"
 generate-setup-file = true
 
 [tool.poetry.dependencies]
-python = "^3.8.1"
+python = "<4.0.0,>=3.7.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.0"
