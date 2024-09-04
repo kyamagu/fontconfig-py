@@ -34,7 +34,7 @@ jobs:
         env:
           CIBW_ARCHS_LINUX: x86_64
           CIBW_ARCHS_MACOS: universal2
-          CIBW_SKIP: pp* cp38-macos*
+          CIBW_SKIP: pp* cp36-* cp38-macos*
           CIBW_BEFORE_ALL: bash {project}/scripts/build_third_party.sh
           CIBW_BEFORE_BUILD: git clean -xf && rm -rf {project}/build
           CIBW_ENVIRONMENT_LINUX: >
