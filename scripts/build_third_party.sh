@@ -23,7 +23,6 @@ build_fontconfig() {
     ./autogen.sh \
         --disable-shared \
         --with-pic \
-        --disable-nls \
         --disable-libxml2 \
         --disable-iconv \
         --disable-docs \
@@ -53,6 +52,8 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     brew uninstall --ignore-dependencies -f fontconfig freetype
     brew install gperftools gettext automake libtool
     prepare_macos_dirs
+elif command -v dnf &> /dev/null; then
+    dnf install -y gperf gettext-devel libuuid-devel
 elif command -v yum &> /dev/null; then
     yum --disablerepo=epel install -y gperf gettext-devel libuuid-devel
 elif command -v apk &> /dev/null; then
