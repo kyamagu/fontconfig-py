@@ -5,7 +5,7 @@ description = "Python bindings to fontconfig"
 authors = [
     {name = "Kota Yamaguchi", email = "yamaguchi_kota@cyberagent.co.jp"}
 ]
-license = "MIT"
+license = "MIT AND FTL"
 readme = "README.md"
 requires-python = ">=3.9,<4.0"
 dependencies = []
