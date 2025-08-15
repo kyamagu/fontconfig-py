@@ -23,9 +23,9 @@ fonts in the system:
 ```python
 import fontconfig
 
-fonts = fontconfig.query(where=":lang=en", select=("family",))
+fonts = fontconfig.query(where=":lang=en", select=("family", "file"))
 for font in fonts:
-    print(font["family"])
+    print(font)
 ```
 
 ## Development notes
@@ -46,6 +46,6 @@ The features of this package are the following:
 
 ## License notice
 
-This project is distributed under [MIT license](LICENSE.txt).
-The binary wheels link [fontconfig](https://www.fontconfig.org) and [freetype](https://www.freetype.org) which are distributed under different licenses.
-See [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt).
+This project is distributed under [MIT license](LICENSE).
+The binary wheels bundles [fontconfig](https://www.fontconfig.org) and [freetype](https://www.freetype.org) under different licenses.
+See [NOTICE](NOTICE).
