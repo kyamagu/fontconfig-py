@@ -45,7 +45,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           path: wheelhouse/*.whl
-          name: wheels-${{ runner.os }}
+          name: wheels-${{ matrix.os }}
 
   pypi-publish:
     name: Upload release to PyPI
