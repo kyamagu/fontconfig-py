@@ -17,48 +17,35 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macOS-latest]
+        os: [ubuntu-latest, ubuntu-24.04-arm, macOS-latest]
 
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: true
 
-      - uses: actions/setup-python@v3
-
-      - name: Install cibuildwheel
-        run: python -m pip install cibuildwheel==2.20.0
-
       - name: Build wheels
-        run: python -m cibuildwheel --output-dir dist
+        uses: pypa/cibuildwheel@v3.1.3
         env:
-          CIBW_ARCHS_LINUX: x86_64
           CIBW_ARCHS_MACOS: universal2
-          CIBW_SKIP: pp* cp36-* cp38-macos*
           CIBW_BEFORE_ALL: bash {project}/scripts/build_third_party.sh
-          CIBW_BEFORE_BUILD: git clean -xf && rm -rf {project}/build
           CIBW_ENVIRONMENT_LINUX: >
-            LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
-            PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
+            LD_LIBRARY_PATH="/usr/local/lib:$LD_LIBRARY_PATH"
+            PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH"
             CFLAGS="-ffunction-sections -fdata-sections"
             LDFLAGS="-Wl,--gc-sections"
           CIBW_ENVIRONMENT_MACOS: >
-            LIBTOOLIZE=glibtoolize
-            DYLD_LIBRARY_PATH=/usr/local/lib:$DYLD_LIBRARY_PATH
-            PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
-            LDFLAGS="-dead_strip"
-          CIBW_REPAIR_WHEEL_COMMAND_MACOS: >
-            python -m pip install wheel &&
-            python -m wheel tags --platform-tag macosx_14_0_universal2 {wheel} &&
-            rm -f {wheel} &&
-            delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v $(dirname {wheel})/*.whl
+            DYLD_LIBRARY_PATH="/usr/local/lib:$DYLD_LIBRARY_PATH"
+            PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH"
+            CFLAGS="-I/usr/local/include"
+            LDFLAGS="-L/usr/local/lib -dead_strip"
           CIBW_TEST_REQUIRES: pytest
           CIBW_TEST_COMMAND: pytest {project}/tests
 
       - uses: actions/upload-artifact@v4
         with:
-          path: ./dist/*.whl
-          name: wheels-${{ runner.os }}
+          path: wheelhouse/*.whl
+          name: wheels-${{ matrix.os }}
 
   pypi-publish:
     name: Upload release to PyPI

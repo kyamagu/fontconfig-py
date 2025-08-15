@@ -174,4 +174,3 @@ Temporary Items
 
 # Cython intermediate files
 src/**/*.c
-setup.py

@@ -1,6 +1,6 @@
-from distutils.core import Extension
-
 from Cython.Build import cythonize
+from setuptools import setup
+from setuptools.extension import Extension
 
 ext_modules = [
     Extension(
@@ -10,9 +10,4 @@ ext_modules = [
     ),
 ]
 
-
-def build(setup_kwargs):
-    options = dict(
-        ext_modules=cythonize(ext_modules),
-    )
-    setup_kwargs.update(options)
+setup(ext_modules=cythonize(ext_modules))
