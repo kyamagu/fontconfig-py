@@ -1,6 +1,6 @@
 [project]
 name = "fontconfig-py"
-version = "0.1.3"
+version = "0.2.0"
 description = "Python bindings to fontconfig"
 authors = [
     {name = "Kota Yamaguchi", email = "yamaguchi_kota@cyberagent.co.jp"}
