@@ -66,7 +66,7 @@ The build process is more complex than typical Python packages due to static lin
 
 ```bash
 # Install with development dependencies
-uv sync --group dev
+uv sync --dev
 
 # Or install docs dependencies
 uv sync --group docs
@@ -90,13 +90,13 @@ The build script installs: gperf, gettext, uuid libraries, automake, libtool (pl
 
 ```bash
 # Run all tests
-pytest tests/
+uv run pytest tests/
 
 # Run a single test file
-pytest tests/test_fontconfig.py
+uv run pytest tests/test_fontconfig.py
 
 # Run a specific test
-pytest tests/test_fontconfig.py::test_query -v
+uv run tests/test_fontconfig.py::test_query -v
 ```
 
 **Test fixtures:**
@@ -109,10 +109,10 @@ pytest tests/test_fontconfig.py::test_query -v
 
 ```bash
 # Lint with ruff
-ruff check .
+uvx ruff check .
 
 # Format with ruff
-ruff format .
+uvx ruff format .
 ```
 
 ### Documentation
@@ -149,7 +149,7 @@ xdg-open build/html/index.html  # Linux
 
    ```bash
    # Rebuild extension
-   pip install -e . --force-reinstall --no-deps
+   uv sync --reinstall
    ```
 
 ## Common Patterns
