@@ -113,6 +113,9 @@ uvx ruff check .
 
 # Format with ruff
 uvx ruff format .
+
+# Check type hints
+uv run mypy src/ tests/
 ```
 
 ### Documentation
@@ -184,7 +187,9 @@ matched = config.font_match(pattern)
 
 - Ensure git submodules are initialized: `git submodule update --init --recursive`
 - Check system dependencies are installed (see `build_third_party.sh`)
-- On macOS, ensure Xcode command line tools are installed
+- On macOS, ensure Xcode command line tools are installed. Also, set the following environment variables in the local environment:
+  - `CC=clang`
+  - `CFLAGS="-I/opt/homebrew/include -L/opt/homebrew/lib"`
 
 **Test failures on "family=Arial":**
 

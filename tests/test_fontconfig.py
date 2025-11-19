@@ -1,5 +1,5 @@
 import logging
-from typing import Any
+from typing import Any, Generator
 
 import fontconfig
 import pytest
@@ -20,7 +20,7 @@ def test_Blanks() -> None:
 
 
 @pytest.fixture(scope="module")
-def config() -> fontconfig.Config:
+def config() -> Generator[fontconfig.Config, None, None]:
     yield fontconfig.Config.get_current()
 
 
@@ -162,7 +162,7 @@ def test_Config_iter(config) -> None:
 
 
 @pytest.fixture(scope="module")
-def pattern() -> fontconfig.Pattern:
+def pattern() -> Generator[fontconfig.Pattern, None, None]:
     yield fontconfig.Pattern.parse(":lang=en")
 
 
