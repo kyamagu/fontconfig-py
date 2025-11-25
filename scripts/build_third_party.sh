@@ -21,6 +21,8 @@ build_freetype() {
 build_fontconfig() {
     cd third_party/fontconfig
     ./autogen.sh \
+        --sysconfdir=${FC_SYSCONFDIR:-"/etc"} \
+        --localstatedir=${FC_LOCALSTATEDIR:-"/var"} \
         --disable-shared \
         --with-pic \
         --disable-libxml2 \
@@ -46,9 +48,20 @@ prepare_macos_dirs() {
 
 # Install build dependencies
 if [[ "$OSTYPE" == "darwin"* ]]; then
+    # Check for Homebrew
+    if ! command -v brew &> /dev/null; then
+        echo "Error: Homebrew is required for macOS builds" >&2
+        echo "Install Homebrew from https://brew.sh" >&2
+        exit 1
+    fi
+
     export CFLAGS="$CFLAGS -arch x86_64 -arch arm64"
     export LDFLAGS="$LDFLAGS -arch x86_64 -arch arm64"
     export LIBTOOLIZE="glibtoolize"
+    # Set Homebrew-specific directories for fontconfig by default on macOS
+    export FC_SYSCONFDIR="$(brew --prefix)/etc"
+    export FC_LOCALSTATEDIR="$(brew --prefix)/var"
+    # Make sure conflicting packages are not installed
     brew uninstall --ignore-dependencies -f fontconfig freetype
     brew install gperftools gettext automake libtool
     prepare_macos_dirs
