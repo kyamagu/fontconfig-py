@@ -198,12 +198,56 @@ matched = config.font_match(pattern)
 
 **Version mismatches:**
 
-- Package version is in `pyproject.toml` (currently 0.1.3)
-- `__version__` in `__init__.py` should match (currently 0.1.2 - needs update)
+- Package version is in `pyproject.toml`
+- `__version__` in `__init__.py` should match
 
 ## Release Process
 
-1. Update version in `pyproject.toml`
-2. Update `__version__` in `src/fontconfig/__init__.py`
-3. Create and push git tag
-4. Create GitHub release (triggers wheel build and PyPI upload via CI)
+The project uses a **release-then-publish** workflow where PyPI publishing only happens after creating a GitHub Release:
+
+1. **Update version numbers:**
+
+   ```bash
+   # Update version in pyproject.toml and src/fontconfig/__init__.py
+   ```
+
+2. **Update CHANGELOG.md:**
+   - Add new version section with changes under Fixed/Added/Changed/Documentation sections
+
+3. **Commit and push:**
+
+   ```bash
+   git add pyproject.toml src/fontconfig/__init__.py CHANGELOG.md uv.lock
+   git commit -m "Bump version to X.Y.Z"
+   git push origin main
+   ```
+
+4. **Create and push git tag:**
+
+   ```bash
+   git tag vX.Y.Z
+   git push origin vX.Y.Z
+   ```
+
+5. **Create GitHub Release:**
+
+   ```bash
+   # Using gh CLI (recommended)
+   gh release create vX.Y.Z --title "Release X.Y.Z" --notes-file release-notes.md
+
+   # Or manually via GitHub web interface:
+   # https://github.com/kyamagu/fontconfig-py/releases/new
+   ```
+
+6. **Publishing to PyPI happens automatically:**
+   - The GitHub Actions workflow (`.github/workflows/wheels.yaml`) triggers on release publication
+   - It builds wheels for Linux (x86_64, ARM), macOS (universal2)
+   - Runs pytest to verify builds
+   - Uploads to PyPI using trusted publishing (OIDC)
+
+**Important notes:**
+
+- Just pushing a tag does NOT trigger PyPI upload
+- A GitHub Release must be created/published to trigger the upload
+- This allows reviewing built wheels and adding release notes before publishing
+- The workflow uses the `release` environment which may require approval
