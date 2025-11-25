@@ -135,7 +135,7 @@ cdef extern from "fontconfig/fontconfig.h":
 
     ctypedef _FcLangResult FcLangResult
 
-    cpdef enum _FcSetName:
+    cdef enum _FcSetName:
         FcSetSystem
         FcSetApplication
 
