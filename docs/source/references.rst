@@ -3,11 +3,24 @@
 
 .. automodule:: fontconfig
 
-   .. rubric:: Functions
+   .. rubric:: High-Level Functions
+
+   .. autosummary::
+
+      match
+      sort
+      list
+
+   .. rubric:: Utility Functions
 
    .. autosummary::
 
       get_version
+
+   .. rubric:: Deprecated Functions
+
+   .. autosummary::
+
       query
 
    .. rubric:: Classes
@@ -22,10 +35,25 @@
       Pattern
 
 
-Functions
----------
+High-Level Functions
+--------------------
+
+These functions provide a convenient way to work with fonts, aligned with the
+core fontconfig library operations.
+
+.. autofunction:: match
+
+.. autofunction:: sort
+
+.. autofunction:: list
+
+Utility Functions
+-----------------
 
 .. autofunction:: get_version
+
+Deprecated Functions
+--------------------
 
 .. autofunction:: query
 

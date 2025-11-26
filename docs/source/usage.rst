@@ -1,40 +1,104 @@
 Usage
 =====
 
-Basic Font Querying
--------------------
+Basic Font Operations
+---------------------
 
-The simplest way to query fonts is using the :py:func:`fontconfig.query` function.
-This high-level API provides a convenient way to search for fonts in your system.
+fontconfig-py provides three high-level functions that align with the core fontconfig
+library operations:
 
-Query all fonts with specific properties
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- :py:func:`fontconfig.match` - Find the **single best** matching font (wraps ``FcFontMatch``)
+- :py:func:`fontconfig.sort` - Get fonts **sorted by match quality** (wraps ``FcFontSort``)
+- :py:func:`fontconfig.list` - **List all** matching fonts (wraps ``FcFontList``)
 
-Find all English fonts and display their family names::
+Choosing the Right Function
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+- **Need one font?** Use :py:func:`match`
+- **Need best matches in order?** Use :py:func:`sort`
+- **Need to enumerate all fonts?** Use :py:func:`list`
+
+Finding the Best Font (match)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use :py:func:`fontconfig.match` when you need a single font that best matches your
+requirements. This is equivalent to the ``fc-match`` command-line tool::
 
    import fontconfig
 
-   fonts = fontconfig.query(where=":lang=en", select=("family",))
+   # Find best match for Arial Bold
+   font = fontconfig.match(":family=Arial:weight=200")
+   if font:
+       print(f"Matched: {font['file']}")
+
+   # Using properties dict (alternative to pattern string)
+   font = fontconfig.match(properties={"family": "Arial", "weight": 200})
+
+   # Get specific properties
+   font = fontconfig.match(":family=Arial", select=("family", "file", "style"))
+
+   # Match with no constraints (returns default font)
+   font = fontconfig.match()
+
+Getting Sorted Font Results (sort)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use :py:func:`fontconfig.sort` when you want multiple fonts ordered by match quality.
+This is equivalent to the ``fc-match -s`` command-line tool::
+
+   import fontconfig
+
+   # Get all Arial fonts, best matches first
+   fonts = fontconfig.sort(":family=Arial")
+   for font in fonts[:5]:  # Top 5 matches
+       print(f"{font['family']} - {font['file']}")
+
+   # Using properties dict
+   fonts = fontconfig.sort(properties={"family": "Arial", "slant": 100})
+
+   # Without trimming (include fonts with no common charset)
+   fonts = fontconfig.sort(":family=Arial", trim=False)
+
+Listing All Matching Fonts (list)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use :py:func:`fontconfig.list` when you want to enumerate all fonts matching a pattern.
+This is equivalent to the ``fc-list`` command-line tool::
+
+   import fontconfig
+
+   # List all fonts with English support
+   fonts = fontconfig.list(":lang=en", select=("family", "file"))
    for font in fonts:
-      print(font["family"])
+       print(f"{font['family']}: {font['file']}")
 
-Query fonts by family name
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   # Using properties dict
+   fonts = fontconfig.list(properties={"lang": ["en"]})
 
-Search for a specific font family and retrieve multiple properties::
+   # List all fonts in the system
+   all_fonts = fontconfig.list()
+
+Query fonts by family name (deprecated)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. deprecated:: 0.3.0
+   Use :py:func:`list`, :py:func:`match`, or :py:func:`sort` instead.
+
+The legacy :py:func:`fontconfig.query` function is still available but deprecated::
 
    import fontconfig
 
+   # Old way (deprecated)
    fonts = fontconfig.query(
        where=":family=Arial",
        select=("family", "style", "file", "lang")
    )
-   for font in fonts:
-       print(f"Family: {font['family']}")
-       print(f"Style: {font['style']}")
-       print(f"File: {font['file']}")
-       print(f"Languages: {font['lang']}")
-       print("---")
+
+   # New way (recommended)
+   fonts = fontconfig.list(
+       pattern=":family=Arial",
+       select=("family", "style", "file", "lang")
+   )
 
 Advanced Usage with Low-Level API
 ----------------------------------
