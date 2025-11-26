@@ -9,7 +9,7 @@ Currently, Linux and macOS are supported.
 
 ## Install
 
-Install from the PyPI:
+Install from PyPI:
 
 ```bash
 pip install fontconfig-py
@@ -17,35 +17,74 @@ pip install fontconfig-py
 
 ## Usage
 
-The following demonstrates the usage of `fontconfig.query` to identify English
-fonts in the system:
+### Finding the best matching font
+
+Use `fontconfig.match()` to find the single best font matching your criteria:
 
 ```python
 import fontconfig
 
-fonts = fontconfig.query(where=":lang=en", select=("family", "file"))
-for font in fonts:
-    print(font)
+# Find the best Arial font
+font = fontconfig.match(":family=Arial:weight=200")
+if font:
+    print(font["family"], font["file"])
+
+# Or using a properties dict
+font = fontconfig.match(properties={"family": "Arial", "weight": 200})
 ```
 
-## Development notes
+### Listing all matching fonts
 
-There are other Python wrappers for fontconfig:
+Use `fontconfig.list()` to get all fonts matching a pattern:
+
+```python
+import fontconfig
+
+# List all English fonts
+fonts = fontconfig.list(":lang=en", select=("family", "file"))
+for font in fonts:
+    print(font["family"], font["file"])
+
+# List all available fonts
+all_fonts = fontconfig.list()
+```
+
+### Getting sorted font results
+
+Use `fontconfig.sort()` to get fonts sorted by match quality:
+
+```python
+import fontconfig
+
+# Get Arial fonts sorted by match quality
+fonts = fontconfig.sort(":family=Arial")
+for font in fonts[:5]:  # Top 5 matches
+    print(font["family"], font["file"])
+```
+
+## Documentation
+
+For detailed API documentation and advanced usage, visit [fontconfig-py.readthedocs.io](https://fontconfig-py.readthedocs.io/).
+
+## Features
+
+This package offers several advantages over other fontconfig wrappers:
+
+- **Cython-based wrapper** - High performance with Pythonic API
+- **Statically linked binary wheels** - No runtime dependencies on fontconfig or freetype
+- **Cross-platform support** - Linux and macOS wheels available
+- **Modern high-level API** - Simple `match()`, `list()`, and `sort()` functions
+- **Continuous integration** - Automated PyPI releases and testing
+- **MIT license** - Permissive licensing
+
+### Other Python fontconfig wrappers
 
 - [fontconfig](https://pypi.org/project/fontconfig/): CFFI bindings for fontconfig
 - [python_fontconfig](https://github.com/ldo/python_fontconfig): Python wrapper based on ctypes
 - [Python_fontconfig](https://pypi.org/project/Python-fontconfig/): Unmaintained Cython wrapper
 
-The features of this package are the following:
-
-- Cython-based wrapper
-- Statically linked binary wheels; no runtime dependency
-- Continuous integration to the PyPI distribution
-- [User documentation](https://fontconfig-py.readthedocs.io/)
-- MIT license
-
-## License notice
+## License
 
 This project is distributed under [MIT license](LICENSE).
-The binary wheels bundles [fontconfig](https://www.fontconfig.org) and [freetype](https://www.freetype.org) under different licenses.
-See [NOTICE](NOTICE).
+
+The binary wheels bundle [fontconfig](https://www.fontconfig.org) and [freetype](https://www.freetype.org), which are distributed under their respective licenses. See [NOTICE](NOTICE) for details.
