@@ -385,29 +385,11 @@ def list(
     :param Iterable[str] select: Properties to include in result dicts.
     :param Optional[Config] config: Config instance (default: current config).
     :return: List of dicts with selected properties (no particular order).
-    """
-    ...
 
-def query(where: str = "", select: Iterable[str] = ("family",)) -> List[Dict[str, Any]]:
-    """
-    High-level function to query fonts.
+    **Font Properties**
 
-    .. deprecated:: 0.3.0
-        Use :py:func:`list`, :py:func:`match`, or :py:func:`sort` instead.
-        This function is kept for backward compatibility.
-
-    Example::
-
-        fonts = fontconfig.query(":lang=en", select=("family", "familylang"))
-        for font in fonts:
-            print(font["family"])
-
-    :param str where: Query string like ``":lang=en:family=Arial"``.
-    :param Iterable[str] select: Set of font properties to include in the result.
-    :return: List of font dict.
-
-
-    The following font properties are supported in the query.
+    The following font properties are supported in patterns and can be used in the
+    ``select`` parameter. See also :py:func:`match` and :py:func:`sort`.
 
     ==============  =======  =======================================================
     Property        Type     Description
@@ -463,5 +445,26 @@ def query(where: str = "", select: Iterable[str] = ("family",)) -> List[Dict[str
     fonthashint     Bool     Whether font has hinting
     order           Int      Order number of the font
     ==============  =======  =======================================================
+    """
+    ...
+
+def query(where: str = "", select: Iterable[str] = ("family",)) -> List[Dict[str, Any]]:
+    """
+    High-level function to query fonts.
+
+    .. deprecated:: 0.3.0
+        Use :py:func:`list`, :py:func:`match`, or :py:func:`sort` instead.
+        This function is kept for backward compatibility.
+
+    Example::
+
+        fonts = fontconfig.query(":lang=en", select=("family", "familylang"))
+        for font in fonts:
+            print(font["family"])
+
+    :param str where: Query string like ``":lang=en:family=Arial"``.
+    :param Iterable[str] select: Set of font properties to include in the result.
+        See :py:func:`list` for a complete list of supported font properties.
+    :return: List of font dict.
     """
     ...
