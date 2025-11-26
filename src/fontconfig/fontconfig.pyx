@@ -1,6 +1,7 @@
 import atexit
 import logging
-from typing import Any, Dict, Iterable, Iterator, List, Tuple
+import warnings
+from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple
 
 cimport fontconfig._fontconfig as c_impl
 
@@ -117,12 +118,12 @@ cdef class Config:
         return <bint>c_impl.FcConfigUptoDate(self._ptr)
 
     @staticmethod
-    def home() -> Optional[str]:
+    def home():
         """Return the current home directory"""
         cdef c_impl.FcChar8* result = c_impl.FcConfigHome()
         if result is NULL:
             return None
-        return <bytes>(result).decode("utf-8")
+        return (<bytes>(result)).decode("utf-8")
 
     @staticmethod
     def enable_home(enable: bool) -> bool:
@@ -296,7 +297,7 @@ cdef class Config:
         return <bint>c_impl.FcConfigParseAndLoad(
             self._ptr, <c_impl.FcChar8*>buffer, <c_impl.FcBool>complain)
 
-    def get_sysroot(self) -> Optional[str]:
+    def get_sysroot(self):
         """Obtain the system root directory"""
         cdef const c_impl.FcChar8* sysroot
         ptr = c_impl.FcConfigReference(self._ptr)
@@ -304,7 +305,7 @@ cdef class Config:
         if sysroot is NULL:
             filename = None
         else:
-            filename = <bytes>(sysroot).decode("utf-8")
+            filename = (<bytes>(sysroot)).decode("utf-8")
         c_impl.FcConfigDestroy(ptr)
         return filename
 
@@ -715,7 +716,7 @@ cdef class ObjectSet:
             yield <bytes>(self._ptr.objects[i]).decode("utf-8")
 
     def __repr__(self) -> str:
-        return list(self).__repr__()
+        return [item for item in self].__repr__()
 
     def __len__(self) -> int:
         return self._ptr.nobject
@@ -775,7 +776,7 @@ cdef class FontSet:
             yield Pattern(<intptr_t>(self._ptr.fonts[i]), owner=False)
 
     def __repr__(self) -> str:
-        return list(self).__repr__()
+        return [item for item in self].__repr__()
 
     def __len__(self) -> int:
         return self._ptr.nfont
@@ -788,22 +789,169 @@ cdef class FontSet:
         return Pattern(<intptr_t>self._ptr.fonts[index], owner=False)
 
 
-def query(where: str = "", select: Iterable[str] = ("family",)) -> List[Dict[str, Any]]:
+def _create_pattern(pattern: str = "", properties: Optional[Dict[str, Any]] = None) -> Pattern:
     """
-    High-level function to query fonts.
+    Helper to create Pattern from string or dict.
+
+    :param str pattern: Pattern string like ``":family=Arial:weight=200"``.
+    :param Optional[Dict[str, Any]] properties: Dict of pattern properties.
+    :return: Pattern object.
+    :raises ValueError: If both pattern and properties are specified.
+    """
+    if properties is not None:
+        if pattern:
+            raise ValueError("Cannot specify both 'pattern' and 'properties'")
+        p = Pattern.create()
+        for key, value in properties.items():
+            p.add(key, value)
+        return p
+    else:
+        return Pattern.parse(pattern) if pattern else Pattern.create()
+
+
+def _pattern_to_dict(pattern: Pattern, select: Iterable[str]) -> Dict[str, Any]:
+    """
+    Convert Pattern to dict with selected properties.
+
+    :param Pattern pattern: Pattern object to convert.
+    :param Iterable[str] select: Properties to include in the result.
+    :return: Dict with selected properties.
+    """
+    result = {}
+    for prop in select:
+        try:
+            value = pattern.get(prop)
+            result[prop] = value
+        except KeyError:
+            pass  # Property doesn't exist in this pattern
+    return result
+
+
+def match(
+    pattern: str = "",
+    properties: Optional[Dict[str, Any]] = None,
+    select: Iterable[str] = ("family", "file", "style"),
+    config: Optional[Config] = None,
+) -> Optional[Dict[str, Any]]:
+    """
+    Find the best matching font for a given pattern.
+
+    This wraps FcFontMatch and performs all necessary substitutions.
+    Equivalent to the ``fc-match`` command-line tool.
 
     Example::
 
-        fonts = fontconfig.query(":lang=en", select=("family", "familylang"))
-        for font in fonts:
-            print(font["family"])
+        # Find best match for Arial Bold
+        font = fontconfig.match(":family=Arial:weight=200")
+        if font:
+            print(font["file"])
 
-    :param str where: Query string like ``":lang=en:family=Arial"``.
-    :param Iterable[str] select: Set of font properties to include in the result.
-    :return: List of font dict.
+        # Using properties dict
+        font = fontconfig.match(properties={"family": "Arial", "weight": 200})
+
+        # Custom properties to return
+        font = fontconfig.match(":family=Arial", select=("family", "file", "weight"))
+
+    :param str pattern: Pattern string like ``":family=Arial:weight=200"``.
+    :param Optional[Dict[str, Any]] properties: Dict of pattern properties (alternative to pattern string).
+    :param Iterable[str] select: Properties to include in result dict.
+    :param Optional[Config] config: Config instance (default: current config).
+    :return: Dict with selected properties, or None if no match.
+    """
+    if config is None:
+        config = Config.get_current()
+
+    p = _create_pattern(pattern, properties)
+    p.default_substitute()
+    config.substitute(p)
+
+    matched = config.font_match(p)
+    if matched is None:
+        return None
+
+    return _pattern_to_dict(matched, select)
 
 
-    The following font properties are supported in the query.
+def sort(
+    pattern: str = "",
+    properties: Optional[Dict[str, Any]] = None,
+    select: Iterable[str] = ("family", "file", "style"),
+    trim: bool = True,
+    config: Optional[Config] = None,
+) -> List[Dict[str, Any]]:
+    """
+    Get a sorted list of fonts matching a pattern, ordered by quality.
+
+    This wraps FcFontSort and returns fonts in preference order.
+    Equivalent to the ``fc-match -s`` command-line tool.
+
+    Example::
+
+        # Get all Arial fonts, best matches first
+        fonts = fontconfig.sort(":family=Arial")
+        for font in fonts[:5]:  # Top 5 matches
+            print(font["family"], font["file"])
+
+        # Using properties dict
+        fonts = fontconfig.sort(properties={"family": "Arial"})
+
+        # Without trimming (include all fonts even with no common charset)
+        fonts = fontconfig.sort(":family=Arial", trim=False)
+
+    :param str pattern: Pattern string like ``":family=Arial"``.
+    :param Optional[Dict[str, Any]] properties: Dict of pattern properties (alternative to pattern string).
+    :param Iterable[str] select: Properties to include in result dicts.
+    :param bool trim: Remove fonts with no common charset.
+    :param Optional[Config] config: Config instance (default: current config).
+    :return: List of dicts with selected properties, sorted by match quality.
+    """
+    if config is None:
+        config = Config.get_current()
+
+    p = _create_pattern(pattern, properties)
+    p.default_substitute()
+    config.substitute(p)
+
+    font_set = config.font_sort(p, trim)
+    if font_set is None:
+        return []
+
+    return [_pattern_to_dict(font, select) for font in font_set]
+
+
+def list(
+    pattern: str = "",
+    properties: Optional[Dict[str, Any]] = None,
+    select: Iterable[str] = ("family",),
+    config: Optional[Config] = None,
+) -> List[Dict[str, Any]]:
+    """
+    List all fonts matching a pattern.
+
+    This wraps FcFontList (same as query() but with better naming).
+    Equivalent to the ``fc-list`` command-line tool.
+
+    Example::
+
+        # List all fonts with English support
+        fonts = fontconfig.list(":lang=en", select=("family", "file"))
+
+        # Using properties dict
+        fonts = fontconfig.list(properties={"lang": ["en"]})
+
+        # List all fonts
+        fonts = fontconfig.list()
+
+    :param str pattern: Pattern string like ``":lang=en:family=Arial"``.
+    :param Optional[Dict[str, Any]] properties: Dict of pattern properties (alternative to pattern string).
+    :param Iterable[str] select: Properties to include in result dicts.
+    :param Optional[Config] config: Config instance (default: current config).
+    :return: List of dicts with selected properties (no particular order).
+
+    **Font Properties**
+
+    The following font properties are supported in patterns and can be used in the
+    ``select`` parameter. See also :py:func:`match` and :py:func:`sort`.
 
     ==============  =======  =======================================================
     Property        Type     Description
@@ -860,6 +1008,40 @@ def query(where: str = "", select: Iterable[str] = ("family",)) -> List[Dict[str
     order           Int      Order number of the font
     ==============  =======  =======================================================
     """
+    if config is None:
+        config = Config.get_current()
+
+    p = _create_pattern(pattern, properties)
+    object_set = ObjectSet.create()
+    object_set.build(select)
+    font_set = config.font_list(p, object_set)
+    return [_pattern_to_dict(font, select) for font in font_set]
+
+
+def query(where: str = "", select: Iterable[str] = ("family",)) -> List[Dict[str, Any]]:
+    """
+    High-level function to query fonts.
+
+    .. deprecated:: 0.3.0
+        Use :py:func:`list`, :py:func:`match`, or :py:func:`sort` instead.
+        This function is kept for backward compatibility.
+
+    Example::
+
+        fonts = fontconfig.query(":lang=en", select=("family", "familylang"))
+        for font in fonts:
+            print(font["family"])
+
+    :param str where: Query string like ``":lang=en:family=Arial"``.
+    :param Iterable[str] select: Set of font properties to include in the result.
+        See :py:func:`list` for a complete list of supported font properties.
+    :return: List of font dict.
+    """
+    warnings.warn(
+        "query() is deprecated, use list() instead (or match()/sort() depending on use case)",
+        DeprecationWarning,
+        stacklevel=2
+    )
     config = Config.get_current()
     pattern = Pattern.parse(where)
     object_set = ObjectSet.create()

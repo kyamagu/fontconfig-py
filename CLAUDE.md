@@ -31,9 +31,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `Blanks`: Legacy Unicode blank character handling (deprecated)
 - `CharSet`: Set of Unicode characters
 
-**High-level API:**
+**High-level API (v0.3.0+):**
 
-- `query(where, select)`: Simplified font querying function that wraps Config/Pattern/ObjectSet operations
+Three main functions aligned with fontconfig core operations:
+
+- `match(pattern, properties, select, config)`: Find the best matching font (wraps `FcFontMatch`)
+- `sort(pattern, properties, select, trim, config)`: Get fonts sorted by match quality (wraps `FcFontSort`)
+- `list(pattern, properties, select, config)`: List all matching fonts (wraps `FcFontList`)
+
+All functions support both pattern strings (`:family=Arial:weight=200`) and properties dicts (`{"family": "Arial", "weight": 200}`).
+
+**Deprecated:**
+
+- `query(where, select)`: Deprecated in v0.3.0, use `list()` instead (or `match()`/`sort()` depending on use case)
 
 ### Build System
 
@@ -157,24 +167,57 @@ xdg-open build/html/index.html  # Linux
 
 ## Common Patterns
 
-### Querying Fonts
+### Finding the Best Font (v0.3.0+)
 
 ```python
-# High-level API (recommended for simple queries)
-fonts = fontconfig.query(where=":lang=en:family=Arial", select=("family", "file"))
+# High-level API (recommended) - wraps FcFontMatch
+font = fontconfig.match(":family=Arial:weight=200")
+if font:
+    print(font["file"])
 
-# Low-level API (more control)
+# Using properties dict
+font = fontconfig.match(properties={"family": "Arial", "weight": 200})
+
+# Custom properties to return
+font = fontconfig.match(":family=Arial", select=("family", "file", "weight"))
+```
+
+### Getting Sorted Font Results (v0.3.0+)
+
+```python
+# High-level API (recommended) - wraps FcFontSort
+fonts = fontconfig.sort(":family=Arial")
+for font in fonts[:5]:  # Top 5 matches
+    print(font["family"], font["file"])
+
+# Using properties dict
+fonts = fontconfig.sort(properties={"family": "Arial"})
+```
+
+### Listing All Matching Fonts (v0.3.0+)
+
+```python
+# High-level API (recommended) - wraps FcFontList
+fonts = fontconfig.list(":lang=en", select=("family", "file"))
+
+# Using properties dict
+fonts = fontconfig.list(properties={"lang": ["en"]})
+
+# List all fonts
+fonts = fontconfig.list()
+```
+
+### Low-Level API (for advanced use cases)
+
+```python
+# Direct access to Config/Pattern/ObjectSet for more control
 config = fontconfig.Config.get_current()
 pattern = fontconfig.Pattern.parse(":lang=en")
 object_set = fontconfig.ObjectSet.create()
 object_set.add("family")
 fonts = config.font_list(pattern, object_set)
-```
 
-### Font Matching
-
-```python
-config = fontconfig.Config.get_current()
+# Manual font matching with substitutions
 pattern = fontconfig.Pattern.parse(":family=Arial")
 pattern.default_substitute()
 config.substitute(pattern)

@@ -8,7 +8,7 @@ cdef extern from "fontconfig/fontconfig.h":
 
     ctypedef int FcBool
 
-    cpdef enum _FcType:
+    cdef enum _FcType:
         FcTypeUnknown
         FcTypeVoid
         FcTypeInteger
@@ -49,7 +49,7 @@ cdef extern from "fontconfig/fontconfig.h":
 
     ctypedef _FcConstant FcConstant
 
-    cpdef enum _FcResult:
+    cdef enum _FcResult:
         FcResultMatch
         FcResultNoMatch
         FcResultTypeMismatch
@@ -58,7 +58,7 @@ cdef extern from "fontconfig/fontconfig.h":
 
     ctypedef _FcResult FcResult
 
-    cpdef enum _FcValueBinding:
+    cdef enum _FcValueBinding:
         FcValueBindingWeak
         FcValueBindingStrong
         FcValueBindingSame
@@ -118,7 +118,7 @@ cdef extern from "fontconfig/fontconfig.h":
 
     ctypedef _FcObjectSet FcObjectSet
 
-    cpdef enum _FcMatchKind:
+    cdef enum _FcMatchKind:
         FcMatchPattern
         FcMatchFont
         FcMatchScan
@@ -127,7 +127,7 @@ cdef extern from "fontconfig/fontconfig.h":
 
     ctypedef _FcMatchKind FcMatchKind
 
-    cpdef enum _FcLangResult:
+    cdef enum _FcLangResult:
         FcLangEqual
         FcLangDifferentCountry
         FcLangDifferentTerritory

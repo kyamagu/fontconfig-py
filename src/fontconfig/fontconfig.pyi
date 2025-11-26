@@ -289,22 +289,107 @@ class FontSet:
     def __len__(self) -> int: ...
     def __getitem__(self, index: int) -> Pattern: ...
 
-def query(where: str = "", select: Iterable[str] = ("family",)) -> List[Dict[str, Any]]:
+def match(
+    pattern: str = "",
+    properties: Optional[Dict[str, Any]] = None,
+    select: Iterable[str] = ("family", "file", "style"),
+    config: Optional[Config] = None,
+) -> Optional[Dict[str, Any]]:
     """
-    High-level function to query fonts.
+    Find the best matching font for a given pattern.
+
+    This wraps FcFontMatch and performs all necessary substitutions.
+    Equivalent to the ``fc-match`` command-line tool.
 
     Example::
 
-        fonts = fontconfig.query(":lang=en", select=("family", "familylang"))
-        for font in fonts:
-            print(font["family"])
+        # Find best match for Arial Bold
+        font = fontconfig.match(":family=Arial:weight=200")
+        if font:
+            print(font["file"])
 
-    :param str where: Query string like ``":lang=en:family=Arial"``.
-    :param Iterable[str] select: Set of font properties to include in the result.
-    :return: List of font dict.
+        # Using properties dict
+        font = fontconfig.match(properties={"family": "Arial", "weight": 200})
 
+        # Custom properties to return
+        font = fontconfig.match(":family=Arial", select=("family", "file", "weight"))
 
-    The following font properties are supported in the query.
+    :param str pattern: Pattern string like ``":family=Arial:weight=200"``.
+    :param Optional[Dict[str, Any]] properties: Dict of pattern properties (alternative to pattern string).
+    :param Iterable[str] select: Properties to include in result dict.
+    :param Optional[Config] config: Config instance (default: current config).
+    :return: Dict with selected properties, or None if no match.
+    """
+    ...
+
+def sort(
+    pattern: str = "",
+    properties: Optional[Dict[str, Any]] = None,
+    select: Iterable[str] = ("family", "file", "style"),
+    trim: bool = True,
+    config: Optional[Config] = None,
+) -> List[Dict[str, Any]]:
+    """
+    Get a sorted list of fonts matching a pattern, ordered by quality.
+
+    This wraps FcFontSort and returns fonts in preference order.
+    Equivalent to the ``fc-match -s`` command-line tool.
+
+    Example::
+
+        # Get all Arial fonts, best matches first
+        fonts = fontconfig.sort(":family=Arial")
+        for font in fonts[:5]:  # Top 5 matches
+            print(font["family"], font["file"])
+
+        # Using properties dict
+        fonts = fontconfig.sort(properties={"family": "Arial"})
+
+        # Without trimming (include all fonts even with no common charset)
+        fonts = fontconfig.sort(":family=Arial", trim=False)
+
+    :param str pattern: Pattern string like ``":family=Arial"``.
+    :param Optional[Dict[str, Any]] properties: Dict of pattern properties (alternative to pattern string).
+    :param Iterable[str] select: Properties to include in result dicts.
+    :param bool trim: Remove fonts with no common charset.
+    :param Optional[Config] config: Config instance (default: current config).
+    :return: List of dicts with selected properties, sorted by match quality.
+    """
+    ...
+
+def list(
+    pattern: str = "",
+    properties: Optional[Dict[str, Any]] = None,
+    select: Iterable[str] = ("family",),
+    config: Optional[Config] = None,
+) -> List[Dict[str, Any]]:
+    """
+    List all fonts matching a pattern.
+
+    This wraps FcFontList (same as query() but with better naming).
+    Equivalent to the ``fc-list`` command-line tool.
+
+    Example::
+
+        # List all fonts with English support
+        fonts = fontconfig.list(":lang=en", select=("family", "file"))
+
+        # Using properties dict
+        fonts = fontconfig.list(properties={"lang": ["en"]})
+
+        # List all fonts
+        fonts = fontconfig.list()
+
+    :param str pattern: Pattern string like ``":lang=en:family=Arial"``.
+    :param Optional[Dict[str, Any]] properties: Dict of pattern properties (alternative to pattern string).
+    :param Iterable[str] select: Properties to include in result dicts.
+    :param Optional[Config] config: Config instance (default: current config).
+    :return: List of dicts with selected properties (no particular order).
+
+    **Font Properties**
+
+    The following font properties are supported in patterns and can be used in the
+    ``select`` parameter. See also :py:func:`match` and :py:func:`sort`.
 
     ==============  =======  =======================================================
     Property        Type     Description
@@ -360,5 +445,26 @@ def query(where: str = "", select: Iterable[str] = ("family",)) -> List[Dict[str
     fonthashint     Bool     Whether font has hinting
     order           Int      Order number of the font
     ==============  =======  =======================================================
+    """
+    ...
+
+def query(where: str = "", select: Iterable[str] = ("family",)) -> List[Dict[str, Any]]:
+    """
+    High-level function to query fonts.
+
+    .. deprecated:: 0.3.0
+        Use :py:func:`list`, :py:func:`match`, or :py:func:`sort` instead.
+        This function is kept for backward compatibility.
+
+    Example::
+
+        fonts = fontconfig.query(":lang=en", select=("family", "familylang"))
+        for font in fonts:
+            print(font["family"])
+
+    :param str where: Query string like ``":lang=en:family=Arial"``.
+    :param Iterable[str] select: Set of font properties to include in the result.
+        See :py:func:`list` for a complete list of supported font properties.
+    :return: List of font dict.
     """
     ...
