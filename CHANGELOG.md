@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2025-12-08
+
+### Fixed
+
+- Fixed TypeError when using single integer/float values for range properties (#36)
+  - `fontconfig.match(properties={"weight": 200})` now works correctly
+  - Single int/float values are automatically converted to ranges [value, value]
+  - Matches the behavior of pattern strings like `:weight=200`
+
+### Changed
+
+- Implemented single-source versioning from `__init__.py`
+
+### Documentation
+
+- Updated README with modern API examples and improved structure
+
 ## [0.3.0] - 2025-11-26
 
 ### Added
