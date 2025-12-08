@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2025-12-08
+
+### Added
+
+- Pythonic CharSet support with comprehensive API
+  - Factory methods: `CharSet.from_string()`, `CharSet.from_codepoints()`
+  - Modification methods: `add()`, `discard()`
+  - Inspection methods: `__len__()`, `__contains__()`, `__iter__()`, `__eq__()`, `__repr__()`
+  - Utility method: `copy()`
+- CharSet integration with fontconfig queries (match, sort, list)
+  - Auto-conversion from strings and codepoint iterables
+  - Support for both character strings and integer codepoints
+  - Seamless integration with Pattern objects
+- 40 comprehensive test cases for CharSet functionality
+  - Creation, modification, inspection, iteration tests
+  - Integration tests with public APIs
+  - Edge case handling (empty charsets, invalid inputs, Unicode planes)
+
+### Documentation
+
+- Added beginner-friendly cookbook with 8 common font search patterns
+  - Finding monospace fonts, fonts by language, bold/italic variants
+  - Checking font existence with fallbacks, system defaults
+  - Color/emoji support, variable fonts, getting file paths
+- Added error handling and edge cases section
+  - Handling None results, empty results, invalid properties
+  - Pattern parsing errors, safe property access
+- Added working with character sets section
+  - CharSet creation and usage examples
+  - Character membership checking
+  - Finding fonts for specific text
+  - Performance optimization tips
+- Expanded pattern documentation
+  - Complete pattern syntax reference
+  - Property value types and examples
+  - Pattern strings vs properties dict comparison
+  - Dynamic pattern building examples
+  - Common pattern mistakes guide
+- Consolidated installation documentation in index.rst
+- 800+ lines of practical, real-world examples
+
 ## [0.3.1] - 2025-12-08
 
 ### Fixed
