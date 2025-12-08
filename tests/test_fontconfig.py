@@ -844,11 +844,15 @@ def test_CharSet_integration_pattern_string_notation() -> None:
     # Use pattern in match
     config = fontconfig.Config.get_current()
     result = config.font_match(pattern)
-    assert isinstance(result, fontconfig.Pattern)
+    # May return None if no fonts available (e.g., in CI)
+    assert result is None or isinstance(result, fontconfig.Pattern)
 
-    # Verify the result has a charset
-    result_charset = result.get("charset")
-    assert result_charset is None or isinstance(result_charset, fontconfig.CharSet)
+    # Verify the result has a charset if a font was found
+    if result is not None:
+        result_charset = result.get("charset")
+        assert result_charset is None or isinstance(
+            result_charset, fontconfig.CharSet
+        )
 
 
 def test_CharSet_integration_empty_charset() -> None:
