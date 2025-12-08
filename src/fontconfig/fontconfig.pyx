@@ -342,6 +342,25 @@ cdef class CharSet:
     FcCharSets may be reference counted internally to reduce memory consumption;
     this may be visible to applications as the result of FcCharSetCopy may
     return it's argument, and that CharSet may remain unmodifiable.
+
+    Example::
+
+        # Create from string
+        charset = fontconfig.CharSet.from_string("abc123")
+
+        # Create from codepoints
+        charset = fontconfig.CharSet.from_codepoints([0x41, 0x42, 0x43])
+
+        # Check membership
+        if 'a' in charset:
+            print("Contains 'a'")
+
+        # Iterate over codepoints
+        for codepoint in charset:
+            print(f"U+{codepoint:04X}")
+
+        # Get count
+        print(f"Contains {len(charset)} characters")
     """
     cdef c_impl.FcCharSet* _ptr
 
@@ -357,13 +376,188 @@ cdef class CharSet:
 
     @classmethod
     def create(cls) -> CharSet:
-        """Create a charset"""
+        """Create an empty charset"""
         ptr = c_impl.FcCharSetCreate()
         if ptr is NULL:
             raise MemoryError()
         return cls(<intptr_t>ptr)
 
-    # TODO: Implement me!
+    @classmethod
+    def from_string(cls, text: str) -> CharSet:
+        """Create charset from string characters.
+
+        Example::
+            charset = CharSet.from_string("Hello, World!")
+        """
+        charset = cls.create()
+        for char in text:
+            charset.add(char)
+        return charset
+
+    @classmethod
+    def from_codepoints(cls, codepoints) -> CharSet:
+        """Create charset from iterable of Unicode codepoints.
+
+        Example::
+            charset = CharSet.from_codepoints([0x41, 0x42, 0x43])  # A, B, C
+        """
+        charset = cls.create()
+        for cp in codepoints:
+            charset.add(cp)
+        return charset
+
+    def copy(self) -> CharSet:
+        """Create a copy of this charset.
+
+        Note: Creates a true independent copy to avoid reference-counting issues.
+        """
+        # Create a new charset and copy all codepoints
+        # FcCharSetCopy() may return a reference-counted pointer, so we
+        # manually copy to ensure independence
+        new_charset = CharSet.create()
+        for codepoint in self:
+            new_charset.add(codepoint)
+        return new_charset
+
+    def add(self, item: object) -> bool:
+        """Add a character to the charset.
+
+        Args:
+            item: Single character string or integer codepoint
+
+        Returns:
+            True on success
+
+        Example::
+            charset.add('A')
+            charset.add(0x41)  # Same as above
+        """
+        cdef c_impl.FcChar32 codepoint
+
+        if isinstance(item, str):
+            if len(item) != 1:
+                raise ValueError("String must be exactly one character")
+            codepoint = <c_impl.FcChar32>ord(item)
+        elif isinstance(item, int):
+            if item < 0 or item > 0x10FFFF:
+                raise ValueError("Codepoint %d out of valid range (0-0x10FFFF)" % item)
+            codepoint = <c_impl.FcChar32>item
+        else:
+            raise TypeError("Expected str or int, got %s" % type(item))
+
+        return <bint>c_impl.FcCharSetAddChar(self._ptr, codepoint)
+
+    def discard(self, item: object) -> bool:
+        """Remove a character from the charset if present.
+
+        Args:
+            item: Single character string or integer codepoint
+
+        Returns:
+            True if character was removed
+
+        Example::
+            charset.discard('A')
+            charset.discard(0x41)
+        """
+        cdef c_impl.FcChar32 codepoint
+
+        if isinstance(item, str):
+            if len(item) != 1:
+                raise ValueError("String must be exactly one character")
+            codepoint = <c_impl.FcChar32>ord(item)
+        elif isinstance(item, int):
+            if item < 0 or item > 0x10FFFF:
+                raise ValueError("Codepoint %d out of valid range (0-0x10FFFF)" % item)
+            codepoint = <c_impl.FcChar32>item
+        else:
+            raise TypeError("Expected str or int, got %s" % type(item))
+
+        return <bint>c_impl.FcCharSetDelChar(self._ptr, codepoint)
+
+    def __len__(self) -> int:
+        """Return the number of characters in the charset."""
+        return <int>c_impl.FcCharSetCount(self._ptr)
+
+    def __contains__(self, item: object) -> bool:
+        """Check if character is in the charset.
+
+        Supports both single-character strings and integer codepoints.
+
+        Example::
+            if 'A' in charset:
+                print("Has A")
+            if 0x41 in charset:
+                print("Has A (by codepoint)")
+        """
+        cdef c_impl.FcChar32 codepoint
+
+        if isinstance(item, str):
+            if len(item) != 1:
+                return False
+            codepoint = <c_impl.FcChar32>ord(item)
+        elif isinstance(item, int):
+            if item < 0 or item > 0x10FFFF:
+                return False
+            codepoint = <c_impl.FcChar32>item
+        else:
+            return False
+
+        return <bint>c_impl.FcCharSetHasChar(self._ptr, codepoint)
+
+    def __iter__(self):
+        """Iterate over Unicode codepoints in the charset.
+
+        Uses fontconfig's pagination API internally.
+
+        Example::
+            for codepoint in charset:
+                print(f"U+{codepoint:04X} = {chr(codepoint)}")
+        """
+        cdef c_impl.FcChar32 next_page = 0
+        cdef c_impl.FcChar32 map[8]  # 8 uint32s = 256 bits
+        cdef c_impl.FcChar32 base
+        cdef int i, bit
+
+        # Use FcCharSetFirstPage and FcCharSetNextPage for iteration
+        base = c_impl.FcCharSetFirstPage(self._ptr, map, &next_page)
+
+        while base != <c_impl.FcChar32>(-1):  # FC_CHARSET_DONE
+            # Iterate through the 256-bit bitmap
+            for i in range(8):  # 8 uint32s
+                if map[i] == 0:
+                    continue
+                for bit in range(32):
+                    if map[i] & (1 << bit):
+                        yield base + i * 32 + bit
+
+            if next_page == <c_impl.FcChar32>(-1):
+                break
+
+            base = c_impl.FcCharSetNextPage(self._ptr, map, &next_page)
+
+    def __eq__(self, other: object) -> bool:
+        """Check if two charsets are equal."""
+        if not isinstance(other, CharSet):
+            return False
+        return <bint>c_impl.FcCharSetEqual(self._ptr, (<CharSet>other)._ptr)
+
+    def __repr__(self) -> str:
+        """Return string representation for debugging."""
+        count = len(self)
+        if count == 0:
+            return "CharSet(empty)"
+        elif count <= 10:
+            # Show actual characters for small sets
+            chars = []
+            for cp in self:
+                if cp < 128 and chr(cp).isprintable():
+                    chars.append(repr(chr(cp)))
+                else:
+                    chars.append("U+%04X" % cp)
+            return "CharSet(%s)" % ', '.join(chars)
+        else:
+            return "CharSet(%d characters)" % count
 
 
 cdef class Pattern:
@@ -539,7 +733,7 @@ cdef void _ObjectToFcValue(object value, c_impl.FcValue* fc_value):
     elif fc_value.type == c_impl.FcTypeString:
         fc_value.u.s = _ObjectToFcFcStr(value)
     elif fc_value.type == c_impl.FcTypeCharSet:
-        raise NotImplementedError("CharSet is not supported yet")
+        fc_value.u.c = _ObjectToFcCharSet(value)
     elif fc_value.type == c_impl.FcTypeLangSet:
         fc_value.u.l = _ObjectToFcLangSet(value)
     elif fc_value.type == c_impl.FcTypeFTFace:
@@ -605,6 +799,74 @@ cdef c_impl.FcRange* _ObjectToFcRange(object value):
     return result
 
 
+cdef c_impl.FcCharSet* _ObjectToFcCharSet(object value):
+    cdef c_impl.FcCharSet* charset
+    cdef c_impl.FcBool result
+    cdef int codepoint
+
+    # Case 1: CharSet instance - copy it
+    if isinstance(value, CharSet):
+        charset = c_impl.FcCharSetCopy((<CharSet>value)._ptr)
+        if charset is NULL:
+            raise MemoryError()
+        return charset
+
+    # Case 2: Create new charset and populate
+    charset = c_impl.FcCharSetCreate()
+    if charset is NULL:
+        raise MemoryError()
+
+    # Case 3: String - iterate characters
+    if isinstance(value, str):
+        for char in value:
+            codepoint = ord(char)
+            result = c_impl.FcCharSetAddChar(charset, <c_impl.FcChar32>codepoint)
+            if not result:
+                c_impl.FcCharSetDestroy(charset)
+                raise ValueError("Failed to add character: %s" % char)
+        return charset
+
+    # Case 4: Iterable - try to iterate
+    try:
+        for item in value:
+            # Handle integer codepoints
+            if isinstance(item, int):
+                if item < 0 or item > 0x10FFFF:
+                    c_impl.FcCharSetDestroy(charset)
+                    raise ValueError("Invalid codepoint: %d (must be 0-0x10FFFF)" % item)
+                codepoint = item
+            # Handle single-character strings
+            elif isinstance(item, str) and len(item) == 1:
+                codepoint = ord(item)
+            else:
+                c_impl.FcCharSetDestroy(charset)
+                raise TypeError("CharSet items must be single chars or int codepoints, got: %s" % type(item))
+
+            result = c_impl.FcCharSetAddChar(charset, <c_impl.FcChar32>codepoint)
+            if not result:
+                c_impl.FcCharSetDestroy(charset)
+                raise ValueError("Failed to add codepoint: %d" % codepoint)
+    except TypeError:
+        c_impl.FcCharSetDestroy(charset)
+        raise TypeError("CharSet value must be CharSet, string, or iterable, got: %s" % type(value))
+
+    return charset
+
+
+cdef object _FcCharSetToObject(const c_impl.FcCharSet* charset):
+    cdef c_impl.FcCharSet* charset_copy
+
+    if charset is NULL:
+        return None
+
+    # Copy to take ownership (CharSet always destroys in __dealloc__)
+    charset_copy = c_impl.FcCharSetCopy(<c_impl.FcCharSet*>charset)
+    if charset_copy is NULL:
+        raise MemoryError()
+
+    return CharSet(<intptr_t>charset_copy)
+
+
 cdef object _FcValueToObject(c_impl.FcValue* value):
     assert value is not NULL
     if value.type == c_impl.FcTypeBool:
@@ -617,8 +879,7 @@ cdef object _FcValueToObject(c_impl.FcValue* value):
         py_bytes = <bytes>(value.u.s)
         return py_bytes.decode("utf-8")
     elif value.type == c_impl.FcTypeCharSet:
-        logger.warning("CharSet is not supported yet")
-        return None
+        return _FcCharSetToObject(value.u.c)
     elif value.type == c_impl.FcTypeLangSet:
         return _FcLangSetToObject(value.u.l)
     elif value.type == c_impl.FcTypeFTFace:
