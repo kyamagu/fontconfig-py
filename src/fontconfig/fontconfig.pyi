@@ -1,4 +1,5 @@
 """Type stubs for fontconfig module"""
+
 from typing import Any, Dict, Iterable, Iterator, List, Optional, Tuple
 
 def get_version() -> str:
