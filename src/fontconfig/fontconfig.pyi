@@ -153,7 +153,39 @@ class CharSet:
     def __init__(self, ptr: int) -> None: ...
     @classmethod
     def create(cls) -> CharSet:
-        """Create a charset"""
+        """Create an empty charset"""
+        ...
+    @classmethod
+    def from_string(cls, text: str) -> CharSet:
+        """Create charset from string characters."""
+        ...
+    @classmethod
+    def from_codepoints(cls, codepoints: Iterable[int]) -> CharSet:
+        """Create charset from iterable of Unicode codepoints."""
+        ...
+    def copy(self) -> CharSet:
+        """Create a copy of this charset."""
+        ...
+    def add(self, item: object) -> bool:
+        """Add a character to the charset."""
+        ...
+    def discard(self, item: object) -> bool:
+        """Remove a character from the charset if present."""
+        ...
+    def __len__(self) -> int:
+        """Return the number of characters in the charset."""
+        ...
+    def __contains__(self, item: object) -> bool:
+        """Check if character is in the charset."""
+        ...
+    def __iter__(self) -> Iterator[int]:
+        """Iterate over Unicode codepoints in the charset."""
+        ...
+    def __eq__(self, other: object) -> bool:
+        """Check if two charsets are equal."""
+        ...
+    def __repr__(self) -> str:
+        """Return string representation for debugging."""
         ...
 
 class Pattern:

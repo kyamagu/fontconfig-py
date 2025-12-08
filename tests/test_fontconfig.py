@@ -220,16 +220,17 @@ def test_Pattern_add(key: str, value: Any) -> None:
     pattern.add(key, value)
 
 
-@pytest.mark.parametrize(
-    "key, value",
-    [
-        ("charset", None),
-    ],
-)
-def test_Pattern_add_xfail(key: str, value: Any) -> None:
+def test_Pattern_add_charset() -> None:
+    """Test adding CharSet to pattern."""
     pattern = fontconfig.Pattern.create()
-    with pytest.raises(NotImplementedError):
-        pattern.add(key, value)
+    charset = fontconfig.CharSet.from_string("abc")
+    pattern.add("charset", charset)
+    # Verify we can retrieve it
+    retrieved = pattern.get("charset")
+    assert isinstance(retrieved, fontconfig.CharSet)
+    assert 'a' in retrieved
+    assert 'b' in retrieved
+    assert 'c' in retrieved
 
 
 def test_Pattern_get(pattern: fontconfig.Pattern) -> None:
@@ -482,3 +483,272 @@ def test_list_with_custom_config() -> None:
     config = fontconfig.Config.get_current()
     results = fontconfig.list(config=config)
     assert isinstance(results, list)
+
+
+# CharSet tests
+
+
+def test_CharSet_create() -> None:
+    """Test creating empty charset."""
+    charset = fontconfig.CharSet.create()
+    assert isinstance(charset, fontconfig.CharSet)
+    assert len(charset) == 0
+
+
+def test_CharSet_from_string() -> None:
+    """Test creating charset from string."""
+    charset = fontconfig.CharSet.from_string("abc")
+    assert len(charset) == 3
+    assert 'a' in charset
+    assert 'b' in charset
+    assert 'c' in charset
+    assert 'd' not in charset
+
+
+def test_CharSet_from_string_duplicates() -> None:
+    """Test creating charset from string with duplicates."""
+    charset = fontconfig.CharSet.from_string("aabbcc")
+    assert len(charset) == 3  # Only unique characters
+
+
+def test_CharSet_from_codepoints() -> None:
+    """Test creating charset from codepoints."""
+    charset = fontconfig.CharSet.from_codepoints([0x41, 0x42, 0x43])
+    assert len(charset) == 3
+    assert 'A' in charset
+    assert 0x41 in charset
+
+
+def test_CharSet_add_char() -> None:
+    """Test adding characters by string."""
+    charset = fontconfig.CharSet.create()
+    assert charset.add('a')
+    assert charset.add('b')
+    assert len(charset) == 2
+    assert 'a' in charset
+    assert 'b' in charset
+
+
+def test_CharSet_add_codepoint() -> None:
+    """Test adding characters by codepoint."""
+    charset = fontconfig.CharSet.create()
+    assert charset.add(0x41)  # 'A'
+    assert charset.add(0x42)  # 'B'
+    assert len(charset) == 2
+    assert 'A' in charset
+    assert 'B' in charset
+
+
+def test_CharSet_add_invalid_string() -> None:
+    """Test adding invalid string raises error."""
+    charset = fontconfig.CharSet.create()
+    with pytest.raises(ValueError, match="exactly one character"):
+        charset.add("ab")  # Too long
+    with pytest.raises(ValueError, match="exactly one character"):
+        charset.add("")  # Empty
+
+
+def test_CharSet_add_invalid_codepoint() -> None:
+    """Test adding invalid codepoint raises error."""
+    charset = fontconfig.CharSet.create()
+    with pytest.raises(ValueError, match="out of valid range"):
+        charset.add(-1)  # Negative
+    with pytest.raises(ValueError, match="out of valid range"):
+        charset.add(0x110000)  # Beyond Unicode range
+
+
+def test_CharSet_add_invalid_type() -> None:
+    """Test adding invalid type raises error."""
+    charset = fontconfig.CharSet.create()
+    with pytest.raises(TypeError, match="Expected str or int"):
+        charset.add(3.14)  # Float
+
+
+def test_CharSet_discard() -> None:
+    """Test removing characters."""
+    charset = fontconfig.CharSet.from_string("abc")
+    assert len(charset) == 3
+    assert charset.discard('b')
+    assert len(charset) == 2
+    assert 'b' not in charset
+    assert 'a' in charset
+    assert 'c' in charset
+
+
+def test_CharSet_discard_missing() -> None:
+    """Test removing character that doesn't exist."""
+    charset = fontconfig.CharSet.from_string("abc")
+    # Discard non-existent character (should still work)
+    charset.discard('z')
+    assert len(charset) == 3
+
+
+def test_CharSet_contains_char() -> None:
+    """Test membership checking with characters."""
+    charset = fontconfig.CharSet.from_string("Hello")
+    assert 'H' in charset
+    assert 'e' in charset
+    assert 'l' in charset
+    assert 'o' in charset
+    assert 'z' not in charset
+
+
+def test_CharSet_contains_codepoint() -> None:
+    """Test membership checking with codepoints."""
+    charset = fontconfig.CharSet.from_string("Hello")
+    assert 0x48 in charset  # 'H'
+    assert 0x65 in charset  # 'e'
+    assert 0x5A not in charset  # 'Z'
+
+
+def test_CharSet_contains_invalid() -> None:
+    """Test membership checking with invalid types returns False."""
+    charset = fontconfig.CharSet.from_string("abc")
+    assert "ab" not in charset  # Multi-char string
+    assert 3.14 not in charset  # Float
+    assert -1 not in charset  # Invalid codepoint
+    assert 0x110000 not in charset  # Out of range
+
+
+def test_CharSet_len() -> None:
+    """Test length calculation."""
+    charset = fontconfig.CharSet.create()
+    assert len(charset) == 0
+    charset.add('a')
+    assert len(charset) == 1
+    charset.add('a')  # Duplicate
+    assert len(charset) == 1  # Still 1
+    charset.add('b')
+    assert len(charset) == 2
+
+
+def test_CharSet_iter() -> None:
+    """Test iteration over codepoints."""
+    charset = fontconfig.CharSet.from_string("abc")
+    codepoints = list(charset)
+    assert len(codepoints) == 3
+    assert all(isinstance(cp, int) for cp in codepoints)
+    # Should contain codepoints for a, b, c
+    assert ord('a') in codepoints
+    assert ord('b') in codepoints
+    assert ord('c') in codepoints
+
+
+def test_CharSet_iter_sorted() -> None:
+    """Test iteration returns codepoints in order."""
+    charset = fontconfig.CharSet.from_string("cba")
+    codepoints = list(charset)
+    # Should be sorted
+    assert codepoints == sorted(codepoints)
+
+
+def test_CharSet_iter_empty() -> None:
+    """Test iterating over empty charset."""
+    charset = fontconfig.CharSet.create()
+    codepoints = list(charset)
+    assert len(codepoints) == 0
+
+
+def test_CharSet_iter_unicode() -> None:
+    """Test iteration with Unicode characters."""
+    # Create charset with characters from multiple Unicode planes
+    codepoints_input = [0x41, 0x42, 0x43, 0x3042, 0x3043]  # A, B, C, あ, い
+    charset = fontconfig.CharSet.from_codepoints(codepoints_input)
+    codepoints_output = list(charset)
+    assert len(codepoints_output) == len(codepoints_input)
+    assert set(codepoints_output) == set(codepoints_input)
+
+
+def test_CharSet_copy() -> None:
+    """Test copying charset."""
+    charset1 = fontconfig.CharSet.from_string("abc")
+    charset2 = charset1.copy()
+    assert charset1 == charset2
+    # Modify copy, original unchanged
+    charset2.add('d')
+    assert 'd' not in charset1
+    assert 'd' in charset2
+    assert charset1 != charset2
+
+
+def test_CharSet_eq() -> None:
+    """Test equality comparison."""
+    charset1 = fontconfig.CharSet.from_string("abc")
+    charset2 = fontconfig.CharSet.from_string("abc")
+    charset3 = fontconfig.CharSet.from_string("abd")
+    assert charset1 == charset2
+    assert charset1 != charset3
+    assert charset2 != charset3
+
+
+def test_CharSet_eq_different_type() -> None:
+    """Test equality with different type."""
+    charset = fontconfig.CharSet.from_string("abc")
+    assert charset != "abc"
+    assert charset != ['a', 'b', 'c']
+    assert charset != 123
+
+
+def test_CharSet_repr_empty() -> None:
+    """Test string representation of empty charset."""
+    charset = fontconfig.CharSet.create()
+    repr_str = repr(charset)
+    assert "CharSet" in repr_str
+    assert "empty" in repr_str
+
+
+def test_CharSet_repr_small() -> None:
+    """Test string representation of small charset."""
+    charset = fontconfig.CharSet.from_string("ab")
+    repr_str = repr(charset)
+    assert "CharSet" in repr_str
+
+
+def test_CharSet_repr_large() -> None:
+    """Test string representation of large charset."""
+    # Create charset with many characters
+    charset = fontconfig.CharSet.from_string("abcdefghijklmnopqrstuvwxyz")
+    repr_str = repr(charset)
+    assert "CharSet" in repr_str
+    assert "characters" in repr_str
+
+
+def test_CharSet_in_match() -> None:
+    """Test using charset in match() API."""
+    charset = fontconfig.CharSet.from_string("abc")
+    # Should not raise, result may be None or dict
+    result = fontconfig.match(properties={"charset": charset}, select=("family", "file"))
+    assert result is None or isinstance(result, dict)
+
+
+def test_CharSet_conversion_string() -> None:
+    """Test charset conversion from string."""
+    pattern = fontconfig.Pattern.create()
+    pattern.add("charset", "abc")
+    retrieved = pattern.get("charset")
+    assert isinstance(retrieved, fontconfig.CharSet)
+    assert 'a' in retrieved
+    assert 'b' in retrieved
+    assert 'c' in retrieved
+
+
+def test_CharSet_conversion_list() -> None:
+    """Test charset conversion from list of chars."""
+    pattern = fontconfig.Pattern.create()
+    pattern.add("charset", ['a', 'b', 'c'])
+    retrieved = pattern.get("charset")
+    assert isinstance(retrieved, fontconfig.CharSet)
+    assert 'a' in retrieved
+    assert 'b' in retrieved
+    assert 'c' in retrieved
+
+
+def test_CharSet_conversion_codepoints() -> None:
+    """Test charset conversion from list of codepoints."""
+    pattern = fontconfig.Pattern.create()
+    pattern.add("charset", [0x41, 0x42, 0x43])  # A, B, C
+    retrieved = pattern.get("charset")
+    assert isinstance(retrieved, fontconfig.CharSet)
+    assert 'A' in retrieved
+    assert 'B' in retrieved
+    assert 'C' in retrieved
