@@ -585,10 +585,21 @@ cdef c_impl.FcMatrix* _ObjectToFcMatrix(object value):
 
 cdef c_impl.FcRange* _ObjectToFcRange(object value):
     cdef c_impl.FcRange* result
-    if isinstance(value[0], int) and isinstance(value[1], int):
-        result = c_impl.FcRangeCreateInteger(<int>value[0], <int>value[1])
+    cdef object begin, end
+
+    # Handle single values by converting to a range
+    if isinstance(value, (int, float)):
+        begin = end = value
+    elif isinstance(value, (tuple, list)) and len(value) == 2:
+        begin = value[0]
+        end = value[1]
     else:
-        result = c_impl.FcRangeCreateDouble(<double>value[0], <double>value[1])
+        raise TypeError("Range value must be a single number or a tuple/list of two numbers")
+
+    if isinstance(begin, int) and isinstance(end, int):
+        result = c_impl.FcRangeCreateInteger(<int>begin, <int>end)
+    else:
+        result = c_impl.FcRangeCreateDouble(<double>begin, <double>end)
     if result is NULL:
         raise MemoryError()
     return result

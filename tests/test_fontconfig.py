@@ -337,6 +337,19 @@ def test_match_with_properties() -> None:
     assert result is None or isinstance(result, dict)
 
 
+def test_match_with_properties_weight() -> None:
+    """Test match with properties dict including weight (issue #36)."""
+    # This should not raise TypeError when weight is an integer
+    result = fontconfig.match(properties={"family": "Arial", "weight": 200})
+    assert result is None or isinstance(result, dict)
+    # Also test with float weight
+    result = fontconfig.match(properties={"family": "Arial", "weight": 200.0})
+    assert result is None or isinstance(result, dict)
+    # Test with weight as a range tuple
+    result = fontconfig.match(properties={"family": "Arial", "weight": (150, 250)})
+    assert result is None or isinstance(result, dict)
+
+
 def test_match_with_select() -> None:
     """Test match with custom select."""
     result = fontconfig.match(":family=Arial", select=("family", "file", "weight"))
