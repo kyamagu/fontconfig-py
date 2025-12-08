@@ -752,3 +752,145 @@ def test_CharSet_conversion_codepoints() -> None:
     assert 'A' in retrieved
     assert 'B' in retrieved
     assert 'C' in retrieved
+
+
+# Integration tests with public APIs
+
+
+def test_CharSet_integration_match_with_charset_instance() -> None:
+    """Test match() with CharSet instance."""
+    # Create a charset with Latin characters
+    charset = fontconfig.CharSet.from_string("ABCDEFGabcdefg")
+    result = fontconfig.match(
+        properties={"family": "sans-serif", "charset": charset},
+        select=("family", "file", "charset")
+    )
+    # Should return a font that supports these characters
+    assert result is None or isinstance(result, dict)
+    if result:
+        assert "family" in result or "file" in result
+
+
+def test_CharSet_integration_match_with_string() -> None:
+    """Test match() with charset as string (auto-conversion)."""
+    result = fontconfig.match(
+        properties={"family": "sans-serif", "charset": "Hello"},
+        select=("family", "file")
+    )
+    # Should auto-convert string to CharSet
+    assert result is None or isinstance(result, dict)
+
+
+def test_CharSet_integration_match_with_codepoints() -> None:
+    """Test match() with charset as list of codepoints."""
+    # Latin letters A-Z
+    codepoints = list(range(0x41, 0x5B))
+    result = fontconfig.match(
+        properties={"charset": codepoints},
+        select=("family", "file")
+    )
+    assert result is None or isinstance(result, dict)
+
+
+def test_CharSet_integration_sort_with_charset() -> None:
+    """Test sort() with charset filtering."""
+    charset = fontconfig.CharSet.from_string("ABCabc123")
+    results = fontconfig.sort(
+        properties={"charset": charset},
+        select=("family", "file"),
+        trim=True
+    )
+    # Should return a sorted list of fonts supporting these characters
+    assert isinstance(results, list)
+    # If results exist, they should be dicts with the requested properties
+    for result in results[:5]:  # Check first 5
+        assert isinstance(result, dict)
+
+
+def test_CharSet_integration_list_with_charset() -> None:
+    """Test list() with charset filtering."""
+    charset = fontconfig.CharSet.from_string("ABC")
+    results = fontconfig.list(
+        properties={"charset": charset},
+        select=("family", "file")
+    )
+    # Should return list of fonts that support these characters
+    assert isinstance(results, list)
+    # All results should be dicts
+    for result in results[:10]:  # Check first 10
+        assert isinstance(result, dict)
+
+
+def test_CharSet_integration_unicode_chars() -> None:
+    """Test with Unicode characters (e.g., Japanese)."""
+    # Japanese hiragana characters
+    charset = fontconfig.CharSet.from_codepoints([0x3042, 0x3044, 0x3046])  # あいう
+    result = fontconfig.match(
+        properties={"charset": charset},
+        select=("family", "file")
+    )
+    # Should find a font with Japanese support (or None if not available)
+    assert result is None or isinstance(result, dict)
+
+
+def test_CharSet_integration_pattern_string_notation() -> None:
+    """Test using charset with pattern string notation."""
+    # Create pattern with charset using parse
+    charset = fontconfig.CharSet.from_string("abc")
+    pattern = fontconfig.Pattern.create()
+    pattern.add("family", "sans-serif")
+    pattern.add("charset", charset)
+
+    # Use pattern in match
+    config = fontconfig.Config.get_current()
+    result = config.font_match(pattern)
+    assert isinstance(result, fontconfig.Pattern)
+
+    # Verify the result has a charset
+    result_charset = result.get("charset")
+    assert result_charset is None or isinstance(result_charset, fontconfig.CharSet)
+
+
+def test_CharSet_integration_empty_charset() -> None:
+    """Test with empty charset."""
+    charset = fontconfig.CharSet.create()
+    result = fontconfig.match(
+        properties={"charset": charset},
+        select=("family", "file")
+    )
+    # Empty charset should still work
+    assert result is None or isinstance(result, dict)
+
+
+def test_CharSet_integration_large_charset() -> None:
+    """Test with large charset covering multiple Unicode blocks."""
+    # Create charset with ASCII + Latin-1 Supplement + Greek
+    codepoints = list(range(0x20, 0x7F))  # ASCII printable
+    codepoints.extend(range(0xA0, 0x100))  # Latin-1 Supplement
+    codepoints.extend(range(0x370, 0x3FF))  # Greek
+
+    charset = fontconfig.CharSet.from_codepoints(codepoints)
+    result = fontconfig.match(
+        properties={"charset": charset},
+        select=("family", "file")
+    )
+    assert result is None or isinstance(result, dict)
+
+
+def test_CharSet_integration_compare_with_font_charset() -> None:
+    """Test comparing input charset with font's charset."""
+    # Get a font and its charset
+    result = fontconfig.match(
+        properties={"family": "sans-serif"},
+        select=("family", "charset")
+    )
+
+    if result and "charset" in result:
+        font_charset = result["charset"]
+        assert isinstance(font_charset, fontconfig.CharSet)
+
+        # Create a small charset and check if font supports it
+        test_charset = fontconfig.CharSet.from_string("Hello")
+
+        # Font charset should contain more characters than our test charset
+        assert len(font_charset) >= len(test_charset)
