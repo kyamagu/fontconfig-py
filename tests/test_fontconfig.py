@@ -835,10 +835,9 @@ def test_CharSet_integration_unicode_chars() -> None:
 
 def test_CharSet_integration_pattern_string_notation() -> None:
     """Test using charset with pattern string notation."""
-    # Create pattern with charset using parse
+    # Create pattern with charset (no family constraint for CI robustness)
     charset = fontconfig.CharSet.from_string("abc")
     pattern = fontconfig.Pattern.create()
-    pattern.add("family", "sans-serif")
     pattern.add("charset", charset)
 
     # Use pattern in match
