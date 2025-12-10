@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - TBD
+
+### Breaking Changes
+
+- **Dropped Python 3.9 support** (EOL as of October 2025)
+- Minimum Python version is now 3.10
+
+### Changed
+
+- Build wheels using Python Limited API (Stable ABI) for forward compatibility
+- Single abi3 wheel now supports Python 3.10, 3.11, 3.12, 3.13, 3.14+
+- Distribution size reduced by ~75% (3 wheels instead of 12+)
+- Performance impact: < 5% for typical font queries
+- Upgraded cibuildwheel to v3.3.0
+
+### Technical
+
+- Enabled `Py_LIMITED_API=0x030A0000` (Python 3.10) in Cython build
+- Wheels use `.abi3` suffix for Stable ABI guarantee
+- Requires Cython ≥3.0.0 and setuptools ≥61.0
+
 ## [0.4.0] - 2025-12-08
 
 ### Added
