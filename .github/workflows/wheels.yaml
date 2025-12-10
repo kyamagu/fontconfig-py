@@ -28,6 +28,8 @@ jobs:
         uses: pypa/cibuildwheel@v3.3.0
         env:
           # Build abi3 wheels using Limited API (auto-detected from setup.py)
+          # Skip free-threaded Python (cp*t-*) - Limited API not yet supported
+          CIBW_SKIP: "cp*t-*"
           CIBW_ARCHS_MACOS: universal2
           CIBW_BEFORE_ALL: bash {project}/scripts/build_third_party.sh
           CIBW_ENVIRONMENT_LINUX: >
