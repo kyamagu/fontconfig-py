@@ -24,5 +24,10 @@ setup(
     ext_modules=cythonize(
         ext_modules,
         compiler_directives={"binding": True, "embedsignature": True}
-    )
+    ),
+    options={
+        "bdist_wheel": {
+            "py_limited_api": "cp310" if USE_LIMITED_API else None,
+        }
+    } if USE_LIMITED_API else {},
 )
