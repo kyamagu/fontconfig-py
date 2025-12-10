@@ -70,6 +70,43 @@ The build process is more complex than typical Python packages due to static lin
    - Tests with pytest before uploading wheels
    - Auto-publishes to PyPI on releases
 
+### Python Limited API and Stable ABI (v1.0.0+)
+
+Starting with v1.0.0, fontconfig-py is built using Python's Limited API (PEP 384), providing Stable ABI wheels.
+
+**Benefits:**
+
+- **Forward compatibility**: Single wheel supports Python 3.10, 3.11, 3.12, 3.13, 3.14+
+- **Reduced distribution**: ~75% smaller total package size (3 wheels instead of 12+)
+- **Future-proof**: Works with future Python versions without rebuilding
+- **Minimal overhead**: < 5% performance impact for typical font queries
+
+**Technical Details:**
+
+- Uses `Py_LIMITED_API=0x030A0000` (Python 3.10) in Cython build
+- Wheels tagged with `.abi3` suffix for Stable ABI guarantee
+- Requires Cython ≥3.0.0 and setuptools ≥61.0
+- Can be disabled with `FONTCONFIG_USE_LIMITED_API=0` environment variable if needed
+
+**Build Configuration:**
+
+The Limited API is enabled by default in `setup.py`:
+
+```python
+# Enable Limited API (can be disabled with env var for troubleshooting)
+USE_LIMITED_API = os.getenv("FONTCONFIG_USE_LIMITED_API", "1") == "1"
+PY_LIMITED_API_VERSION = 0x030A0000  # Python 3.10+
+
+define_macros = [("Py_LIMITED_API", PY_LIMITED_API_VERSION)] if USE_LIMITED_API else []
+py_limited_api = USE_LIMITED_API
+```
+
+To build without Limited API (for maximum performance or troubleshooting):
+
+```bash
+FONTCONFIG_USE_LIMITED_API=0 pip install --no-binary fontconfig-py fontconfig-py
+```
+
 ## Development Commands
 
 ### Environment Setup

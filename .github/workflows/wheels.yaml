@@ -25,8 +25,9 @@ jobs:
           submodules: true
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v3.1.3
+        uses: pypa/cibuildwheel@v3.3.0
         env:
+          # Build abi3 wheels using Limited API (auto-detected from setup.py)
           CIBW_ARCHS_MACOS: universal2
           CIBW_BEFORE_ALL: bash {project}/scripts/build_third_party.sh
           CIBW_ENVIRONMENT_LINUX: >
@@ -41,6 +42,15 @@ jobs:
             LDFLAGS="-L/usr/local/lib -dead_strip"
           CIBW_TEST_REQUIRES: pytest
           CIBW_TEST_COMMAND: pytest {project}/tests
+
+      - name: Verify abi3 wheels
+        run: |
+          ls wheelhouse/
+          if ! ls wheelhouse/*.whl | grep -q "abi3"; then
+            echo "ERROR: No abi3 wheels found!"
+            exit 1
+          fi
+          echo "✓ abi3 wheels created successfully"
 
       - uses: actions/upload-artifact@v4
         with:
