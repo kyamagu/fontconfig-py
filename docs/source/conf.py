@@ -9,8 +9,8 @@ import fontconfig
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "fontconfig-py"
-copyright = "2023, Kota Yamaguchi"
-author = "Kota Yamaguchi"
+copyright = "2025, CyberAgent, Inc."
+author = "CyberAgent, Inc."
 release = fontconfig.__version__
 
 # -- General configuration ---------------------------------------------------

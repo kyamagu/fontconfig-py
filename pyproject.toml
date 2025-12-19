@@ -3,7 +3,7 @@ name = "fontconfig-py"
 dynamic = ["version"]
 description = "Python bindings to fontconfig"
 authors = [
-    {name = "Kota Yamaguchi", email = "yamaguchi_kota@cyberagent.co.jp"}
+    {name = "CyberAgent, Inc.", email = "yamaguchi_kota@cyberagent.co.jp"}
 ]
 license = "MIT AND FTL"
 readme = "README.md"
