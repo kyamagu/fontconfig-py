@@ -11,6 +11,9 @@ on:
     types:
       - published
 
+permissions:
+  contents: read
+
 jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
@@ -68,6 +71,7 @@ jobs:
       name: release
       url: https://pypi.org/p/fontconfig-py
     permissions:
+      contents: read
       id-token: write
     steps:
       - uses: actions/download-artifact@v4
