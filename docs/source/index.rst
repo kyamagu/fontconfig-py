@@ -59,7 +59,7 @@ Find and use a font in three lines::
    if font:
        print(f"Font file: {font['file']}")
 
-For detailed usage instructions, see the :doc:`usage` guide.
+For detailed usage instructions, see the :doc:`getting_started` guide.
 
 Troubleshooting
 ~~~~~~~~~~~~~~~
@@ -78,10 +78,15 @@ Or set it in Python before importing::
    os.environ['FONTCONFIG_PATH'] = '/etc/fonts'
    import fontconfig
 
-See the :ref:`troubleshooting` section in the usage guide for more details.
+See the :ref:`troubleshooting_reference` guide for more details.
 
 .. toctree::
    :maxdepth: 2
+   :caption: Contents:
 
-   usage
+   getting_started
+   common_patterns
+   advanced_topics
+   properties_reference
+   troubleshooting_reference
    references
