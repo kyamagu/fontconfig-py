@@ -5,6 +5,8 @@
 
 Python bindings to [fontconfig](https://www.freedesktop.org/wiki/Software/fontconfig/) based on Cython.
 
+**What is fontconfig?** Fontconfig is a library for configuring and customizing font access on Unix-based systems. It helps applications locate installed fonts and select the best matching font based on criteria like family name, weight, slant, and language support. Instead of hardcoding font paths, applications use fontconfig to query the system's font database.
+
 Currently, Linux and macOS are supported.
 
 ## Install
