@@ -7,9 +7,9 @@ We provide security updates for the following versions of fontconfig-py:
 | Version | Supported          |
 | ------- | ------------------ |
 | 1.x     | :white_check_mark: |
-| 0.4.x   | :white_check_mark: |
-| 0.3.x   | :x:                |
-| < 0.3   | :x:                |
+| < 1.0   | :x:                |
+
+Security fixes are only planned for version 1.0 and later. Earlier versions (0.x releases) will not receive security updates. We strongly recommend upgrading to version 1.x to receive security patches and benefit from the Stable ABI support.
 
 ## Reporting a Vulnerability
 
