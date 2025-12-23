@@ -315,6 +315,7 @@ The project uses a **pull request-based release workflow** to ensure code review
    ```
 
 3. **Update CHANGELOG.md:**
+
    - Change `## [Unreleased]` to `## [X.Y.Z] - YYYY-MM-DD`
    - Or add new version section with changes under Fixed/Added/Changed/Documentation sections
    - Use concise 1-2 line entries for each change
@@ -337,6 +338,7 @@ The project uses a **pull request-based release workflow** to ensure code review
    ```
 
 6. **Merge the pull request:**
+
    - Wait for CI checks to pass
    - Get code review approval
    - Merge to main (do NOT commit directly to main)
@@ -361,6 +363,7 @@ The project uses a **pull request-based release workflow** to ensure code review
    ```
 
 9. **Publishing to PyPI happens automatically:**
+
    - The GitHub Actions workflow (`.github/workflows/wheels.yaml`) triggers on release publication
    - It builds wheels for Linux (x86_64, ARM), macOS (universal2)
    - Runs pytest to verify builds

@@ -245,6 +245,7 @@ The project uses a **pull request-based release workflow**:
    ```
 
 3. **Update CHANGELOG.md**:
+
    - Change `## [Unreleased]` to `## [X.Y.Z] - YYYY-MM-DD`
    - Or add new version section with changes categorized under Fixed/Added/Changed/Documentation
    - Use concise 1-2 line entries for each change
@@ -265,6 +266,7 @@ The project uses a **pull request-based release workflow**:
    ```
 
 6. **Merge after approval**:
+
    - Wait for CI checks to pass
    - Get code review approval
    - Merge to main (**NEVER commit directly to main**)
