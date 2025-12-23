@@ -85,6 +85,17 @@ This package offers several advantages over other fontconfig wrappers:
 - [python_fontconfig](https://github.com/ldo/python_fontconfig): Python wrapper based on ctypes
 - [Python_fontconfig](https://pypi.org/project/Python-fontconfig/): Unmaintained Cython wrapper
 
+## Contributing
+
+Contributions are welcome! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details on:
+
+- Setting up the development environment
+- Running tests and code quality checks
+- Submitting pull requests
+- Code of conduct
+
+For security vulnerabilities, please see our [Security Policy](SECURITY.md).
+
 ## License
 
 This project is distributed under [MIT license](LICENSE).

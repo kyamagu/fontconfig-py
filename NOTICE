@@ -1,5 +1,5 @@
 fontconfig-py bundles third-party libraries or other resources that may be
-distriburted under licenses different than the fontconfig-py software.
+distributed under licenses different than the fontconfig-py software.
 
 License notice for fontconfig
 -----------------------------
@@ -37,4 +37,26 @@ License notice for freetype
 
 The FreeType License (FTL)
 
-See `docs/FTL.txt`.
+Copyright 1996-2002, 2006 by David Turner, Robert Wilhelm, and Werner Lemberg
+
+This software is provided under the FreeType License, which allows use,
+modification, and redistribution with credit attribution. The full license
+text is available in `docs/FTL.txt`.
+
+
+Additional bundled dependencies
+--------------------------------
+
+This software statically links the following system libraries, which are
+included in the binary wheels:
+
+- expat: XML parser library (MIT License)
+  Used by fontconfig for parsing XML configuration files.
+  https://libexpat.github.io/
+
+- zlib: Compression library (zlib License)
+  Used by freetype and fontconfig for data compression.
+  https://www.zlib.net/
+
+Note: When building from source, these libraries are linked during the build
+process and may need to be installed via system package managers.

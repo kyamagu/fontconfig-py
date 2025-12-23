@@ -1,0 +1,47 @@
+name: Question
+description: Ask a question about using fontconfig-py
+title: "[Question]: "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have a question about using fontconfig-py? We're here to help!
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: What would you like to know?
+      placeholder: Ask your question here
+    validations:
+      required: true
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: What Have You Tried?
+      description: What have you already attempted or researched?
+      placeholder: |
+        - Checked the documentation at...
+        - Tried this code...
+        - Searched for...
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Relevant Context
+      description: Provide any relevant context (code snippets, use case, environment details)
+      placeholder: Share code snippets, what you're trying to accomplish, etc.
+
+  - type: textarea
+    id: documentation
+    attributes:
+      label: Documentation References
+      description: Have you checked any documentation? If so, which parts?
+      placeholder: |
+        - README section on...
+        - API docs for...
+        - CLAUDE.md information about...
