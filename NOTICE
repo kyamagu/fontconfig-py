@@ -47,8 +47,8 @@ text is available in `docs/FTL.txt`.
 Additional bundled dependencies
 --------------------------------
 
-This software also links against the following system libraries, which are
-typically provided by the operating system or installed separately:
+This software statically links the following system libraries, which are
+included in the binary wheels:
 
 - expat: XML parser library (MIT License)
   Used by fontconfig for parsing XML configuration files.
@@ -58,6 +58,5 @@ typically provided by the operating system or installed separately:
   Used by freetype and fontconfig for data compression.
   https://www.zlib.net/
 
-These libraries are not bundled with the binary wheels but are statically
-linked during the build process. Users installing from system packages
-should ensure these dependencies are available.
+Note: When building from source, these libraries are linked during the build
+process and may need to be installed via system package managers.
