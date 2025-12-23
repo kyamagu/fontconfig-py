@@ -1,0 +1,109 @@
+name: Bug Report
+description: Report a bug or unexpected behavior in fontconfig-py
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please fill out the information below to help us diagnose and fix the issue.
+
+  - type: input
+    id: version
+    attributes:
+      label: fontconfig-py Version
+      description: What version of fontconfig-py are you using?
+      placeholder: "e.g., 1.0.0"
+    validations:
+      required: true
+
+  - type: input
+    id: python-version
+    attributes:
+      label: Python Version
+      description: What version of Python are you using?
+      placeholder: "e.g., 3.12.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      description: What operating system are you using?
+      options:
+        - macOS
+        - Linux (Ubuntu/Debian)
+        - Linux (Fedora/RHEL/CentOS)
+        - Linux (Arch)
+        - Linux (Other)
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: installation
+    attributes:
+      label: Installation Method
+      description: How did you install fontconfig-py?
+      options:
+        - pip (PyPI)
+        - uv
+        - Built from source
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is.
+      placeholder: Tell us what went wrong
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: Detailed steps to reproduce the behavior
+      placeholder: |
+        1. Import fontconfig
+        2. Call function X with parameters Y
+        3. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+      placeholder: Describe the expected outcome
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened?
+      placeholder: Describe what actually occurred
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Error Messages / Logs
+      description: Please copy and paste any relevant error messages or log output
+      render: shell
+      placeholder: Paste error messages or stack traces here
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context about the problem here (e.g., specific fonts, system configuration)
+      placeholder: Any additional information that might be helpful

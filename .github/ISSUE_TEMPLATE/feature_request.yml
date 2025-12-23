@@ -1,0 +1,61 @@
+name: Feature Request
+description: Suggest a new feature or enhancement for fontconfig-py
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new feature! Please describe your idea below.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem Statement
+      description: What problem would this feature solve? Is your feature request related to a problem?
+      placeholder: "I'm frustrated when... / It would be helpful if..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: Describe the solution you'd like to see implemented
+      placeholder: Describe how you envision this feature working
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative Solutions
+      description: Have you considered any alternative solutions or workarounds?
+      placeholder: Describe any alternative approaches you've thought about
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: Code Examples
+      description: If applicable, provide code examples showing how you'd like to use this feature
+      render: python
+      placeholder: |
+        import fontconfig
+        # Example usage of proposed feature
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context, screenshots, or references about the feature request
+      placeholder: Links to similar features in other libraries, use cases, etc.
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      description: Would you be willing to implement this feature?
+      options:
+        - label: I'd like to implement this feature myself
+        - label: I'd be willing to help but would need guidance
+        - label: I'm just suggesting the idea

@@ -121,10 +121,26 @@ uv sync --group docs
 
 ### Building from Source
 
-**Important:** Building requires system dependencies and compiling C libraries. For local development, you'll need:
+**Important:** Building requires system dependencies. You have two options:
+
+**Option 1: Use system packages (recommended for local development):**
 
 ```bash
-# Run the third-party build script first
+# macOS
+brew install fontconfig freetype pkg-config
+
+# Ubuntu/Debian
+sudo apt-get install libfontconfig1-dev libfreetype6-dev pkg-config
+
+# Then build the Python package
+uv build --wheel
+```
+
+**Option 2: Build third-party libraries from source (CI environment):**
+
+```bash
+# This script builds and installs fontconfig and freetype from submodules
+# Primarily intended for CI environments
 bash scripts/build_third_party.sh
 
 # Then build the Python package
