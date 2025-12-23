@@ -57,7 +57,7 @@ jobs:
           fi
           echo "✓ abi3 wheels created successfully"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           path: wheelhouse/*.whl
           name: wheels-${{ matrix.os }}
