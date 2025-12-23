@@ -231,6 +231,7 @@ The project uses a **pull request-based release workflow**:
 ### Creating a Release
 
 1. **Create a release branch** from main:
+
    ```bash
    git checkout main
    git pull origin main
@@ -238,6 +239,7 @@ The project uses a **pull request-based release workflow**:
    ```
 
 2. **Update version** in `src/fontconfig/__init__.py`:
+
    ```python
    __version__ = "X.Y.Z"
    ```
@@ -247,20 +249,28 @@ The project uses a **pull request-based release workflow**:
    - Or add new version section with changes categorized under Fixed/Added/Changed/Documentation
    - Use concise 1-2 line entries for each change
 
-4. **Create pull request**:
+4. **Update lock file**:
+
    ```bash
-   git add src/fontconfig/__init__.py CHANGELOG.md
+   uv sync
+   ```
+
+5. **Create pull request**:
+
+   ```bash
+   git add src/fontconfig/__init__.py CHANGELOG.md uv.lock
    git commit -m "Bump version to X.Y.Z"
    git push -u origin release/vX.Y.Z
    gh pr create --title "Release vX.Y.Z" --body "Release summary..."
    ```
 
-5. **Merge after approval**:
+6. **Merge after approval**:
    - Wait for CI checks to pass
    - Get code review approval
    - Merge to main (**NEVER commit directly to main**)
 
-6. **Create git tag and GitHub Release** (after merge):
+7. **Create git tag and GitHub Release** (after merge):
+
    ```bash
    git checkout main
    git pull origin main
@@ -269,7 +279,7 @@ The project uses a **pull request-based release workflow**:
    gh release create vX.Y.Z --title "Release X.Y.Z" --notes-from-tag
    ```
 
-7. **PyPI publishing happens automatically** when the GitHub Release is created
+8. **PyPI publishing happens automatically** when the GitHub Release is created
 
 ### Release Branch Naming
 

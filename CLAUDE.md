@@ -319,10 +319,16 @@ The project uses a **pull request-based release workflow** to ensure code review
    - Or add new version section with changes under Fixed/Added/Changed/Documentation sections
    - Use concise 1-2 line entries for each change
 
-4. **Commit, push, and create pull request:**
+4. **Update lock file:**
 
    ```bash
-   git add src/fontconfig/__init__.py CHANGELOG.md
+   uv sync
+   ```
+
+5. **Commit, push, and create pull request:**
+
+   ```bash
+   git add src/fontconfig/__init__.py CHANGELOG.md uv.lock
    git commit -m "Bump version to X.Y.Z"
    git push -u origin release/vX.Y.Z
 
@@ -330,12 +336,12 @@ The project uses a **pull request-based release workflow** to ensure code review
    gh pr create --title "Release vX.Y.Z" --body "Release notes here..."
    ```
 
-5. **Merge the pull request:**
+6. **Merge the pull request:**
    - Wait for CI checks to pass
    - Get code review approval
    - Merge to main (do NOT commit directly to main)
 
-6. **Create and push git tag (after merge):**
+7. **Create and push git tag (after merge):**
 
    ```bash
    git checkout main
@@ -344,7 +350,7 @@ The project uses a **pull request-based release workflow** to ensure code review
    git push origin vX.Y.Z
    ```
 
-7. **Create GitHub Release:**
+8. **Create GitHub Release:**
 
    ```bash
    # Using gh CLI (recommended)
@@ -354,7 +360,7 @@ The project uses a **pull request-based release workflow** to ensure code review
    # https://github.com/kyamagu/fontconfig-py/releases/new
    ```
 
-8. **Publishing to PyPI happens automatically:**
+9. **Publishing to PyPI happens automatically:**
    - The GitHub Actions workflow (`.github/workflows/wheels.yaml`) triggers on release publication
    - It builds wheels for Linux (x86_64, ARM), macOS (universal2)
    - Runs pytest to verify builds
