@@ -9,6 +9,7 @@ This document provides guidelines for contributing to the project. By participat
 - [Getting Started](#getting-started)
 - [Development Workflow](#development-workflow)
 - [Submitting Changes](#submitting-changes)
+- [Release Process](#release-process)
 - [Reporting Issues](#reporting-issues)
 - [Documentation](#documentation)
 - [Code Style](#code-style)
@@ -220,6 +221,67 @@ feat: Add CharSet support for Unicode character sets
 - Maintainers will provide constructive feedback
 - Be open to suggestions and willing to make changes
 - Reviews may take a few days depending on complexity
+
+## Release Process
+
+**Note**: This section is for maintainers. Contributors should focus on submitting pull requests for features and fixes.
+
+The project uses a **pull request-based release workflow**:
+
+### Creating a Release
+
+1. **Create a release branch** from main:
+   ```bash
+   git checkout main
+   git pull origin main
+   git checkout -b release/vX.Y.Z
+   ```
+
+2. **Update version** in `src/fontconfig/__init__.py`:
+   ```python
+   __version__ = "X.Y.Z"
+   ```
+
+3. **Update CHANGELOG.md**:
+   - Change `## [Unreleased]` to `## [X.Y.Z] - YYYY-MM-DD`
+   - Or add new version section with changes categorized under Fixed/Added/Changed/Documentation
+   - Use concise 1-2 line entries for each change
+
+4. **Create pull request**:
+   ```bash
+   git add src/fontconfig/__init__.py CHANGELOG.md
+   git commit -m "Bump version to X.Y.Z"
+   git push -u origin release/vX.Y.Z
+   gh pr create --title "Release vX.Y.Z" --body "Release summary..."
+   ```
+
+5. **Merge after approval**:
+   - Wait for CI checks to pass
+   - Get code review approval
+   - Merge to main (**NEVER commit directly to main**)
+
+6. **Create git tag and GitHub Release** (after merge):
+   ```bash
+   git checkout main
+   git pull origin main
+   git tag vX.Y.Z
+   git push origin vX.Y.Z
+   gh release create vX.Y.Z --title "Release X.Y.Z" --notes-from-tag
+   ```
+
+7. **PyPI publishing happens automatically** when the GitHub Release is created
+
+### Release Branch Naming
+
+- Use `release/vX.Y.Z` format (e.g., `release/v1.0.1`)
+- This ensures consistency and clarity
+
+### Important Notes
+
+- NEVER commit version bumps directly to main
+- Always use a pull request for releases
+- The GitHub Actions workflow automatically publishes to PyPI when a release is created
+- See [CLAUDE.md](CLAUDE.md) for detailed technical documentation
 
 ## Reporting Issues
 

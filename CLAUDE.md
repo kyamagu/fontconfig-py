@@ -299,43 +299,62 @@ matched = config.font_match(pattern)
 
 ## Release Process
 
-The project uses a **release-then-publish** workflow where PyPI publishing only happens after creating a GitHub Release:
+The project uses a **pull request-based release workflow** to ensure code review before publishing:
 
-1. **Update version numbers:**
+1. **Create a release branch:**
 
    ```bash
-   # Update version in pyproject.toml and src/fontconfig/__init__.py
+   git checkout -b release/vX.Y.Z
    ```
 
-2. **Update CHANGELOG.md:**
-   - Add new version section with changes under Fixed/Added/Changed/Documentation sections
-
-3. **Commit and push:**
+2. **Update version numbers:**
 
    ```bash
-   git add pyproject.toml src/fontconfig/__init__.py CHANGELOG.md uv.lock
+   # Update version in src/fontconfig/__init__.py
+   # Version in pyproject.toml is dynamically read from __init__.py
+   ```
+
+3. **Update CHANGELOG.md:**
+   - Change `## [Unreleased]` to `## [X.Y.Z] - YYYY-MM-DD`
+   - Or add new version section with changes under Fixed/Added/Changed/Documentation sections
+   - Use concise 1-2 line entries for each change
+
+4. **Commit, push, and create pull request:**
+
+   ```bash
+   git add src/fontconfig/__init__.py CHANGELOG.md
    git commit -m "Bump version to X.Y.Z"
-   git push origin main
+   git push -u origin release/vX.Y.Z
+
+   # Create PR using gh CLI
+   gh pr create --title "Release vX.Y.Z" --body "Release notes here..."
    ```
 
-4. **Create and push git tag:**
+5. **Merge the pull request:**
+   - Wait for CI checks to pass
+   - Get code review approval
+   - Merge to main (do NOT commit directly to main)
+
+6. **Create and push git tag (after merge):**
 
    ```bash
+   git checkout main
+   git pull origin main
    git tag vX.Y.Z
    git push origin vX.Y.Z
    ```
 
-5. **Create GitHub Release:**
+7. **Create GitHub Release:**
 
    ```bash
    # Using gh CLI (recommended)
-   gh release create vX.Y.Z --title "Release X.Y.Z" --notes-file release-notes.md
+   gh release create vX.Y.Z --title "Release X.Y.Z" --notes-from-tag
 
    # Or manually via GitHub web interface:
    # https://github.com/kyamagu/fontconfig-py/releases/new
    ```
 
-6. **Publishing to PyPI happens automatically:**
+8. **Publishing to PyPI happens automatically:**
    - The GitHub Actions workflow (`.github/workflows/wheels.yaml`) triggers on release publication
    - It builds wheels for Linux (x86_64, ARM), macOS (universal2)
    - Runs pytest to verify builds
@@ -343,6 +362,8 @@ The project uses a **release-then-publish** workflow where PyPI publishing only 
 
 **Important notes:**
 
+- NEVER commit directly to main - always use a pull request
+- Use `release/vX.Y.Z` branch naming convention for releases
 - Just pushing a tag does NOT trigger PyPI upload
 - A GitHub Release must be created/published to trigger the upload
 - This allows reviewing built wheels and adding release notes before publishing
